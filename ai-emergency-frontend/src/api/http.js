@@ -1,7 +1,7 @@
 // src/api/http.js
 // Centralized HTTP helper for the frontend.
 
-const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "") || "";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "") || "";
 
 export async function safeFetch(pathOrUrl, opts = {}) {
   const url = pathOrUrl.startsWith("http") || API_BASE === "" ? pathOrUrl : `${API_BASE}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 
-const API_BASE = (import.meta.env.VITE_API_BASE || "http://localhost:3002").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:3002").replace(/\/$/, "");
 
 function genId(prefix = "") {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
