@@ -17,7 +17,7 @@ export default function AppShellLayout({ children, theme, onToggleTheme }) {
   const isDashboard = location.pathname === "/chat";
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isDashboard ? " app-shell--dashboard" : ""}`}>
       {/* ==== LEFT SIDEBAR ==== */}
       {!isDashboard && (
         <aside className="app-shell__sidebar" aria-hidden={false}>
