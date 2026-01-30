@@ -26,7 +26,17 @@ function wrapDynamoError(err) {
   return err;
 }
 
-export async function createUser({ name, email, password, phone, location, emergencyContacts }) {
+export async function createUser({
+  name,
+  email,
+  password,
+  phone,
+  location,
+  emergencyContacts,
+  medicalInfo,
+  bloodGroup,
+  address,
+}) {
   try {
     if (!email || !password) throw new Error("email and password required");
     const userId = uuidv4();
@@ -41,6 +51,9 @@ export async function createUser({ name, email, password, phone, location, emerg
       PasswordHash: hashed,
       Phone: phone || null,
       Location: location ? JSON.stringify(location) : null,
+      MedicalInfo: medicalInfo || null,
+      BloodGroup: bloodGroup || null,
+      Address: address || null,
       EmergencyContacts: JSON.stringify(Array.isArray(emergencyContacts) ? emergencyContacts : []),
       CreatedAt: new Date().toISOString(),
     };
@@ -61,6 +74,9 @@ export async function createUser({ name, email, password, phone, location, emerg
       email: normalizedEmail,
       name: item.Name,
       phone: item.Phone,
+      medicalInfo: item.MedicalInfo,
+      bloodGroup: item.BloodGroup,
+      address: item.Address,
       emergencyContacts: JSON.parse(item.EmergencyContacts),
       createdAt: item.CreatedAt
     };
@@ -147,6 +163,15 @@ export async function updateUserProfile(userIdOrKeyValue, updates = {}) {
     }
     if (updates.location !== undefined) {
       ExpressionAttributeNames["#L"] = "Location"; ExpressionAttributeValues[":l"] = { S: JSON.stringify(updates.location) }; updateExpr.push("#L = :l");
+    }
+    if (updates.medicalInfo !== undefined) {
+      ExpressionAttributeNames["#MI"] = "MedicalInfo"; ExpressionAttributeValues[":mi"] = { S: String(updates.medicalInfo) }; updateExpr.push("#MI = :mi");
+    }
+    if (updates.bloodGroup !== undefined) {
+      ExpressionAttributeNames["#BG"] = "BloodGroup"; ExpressionAttributeValues[":bg"] = { S: String(updates.bloodGroup) }; updateExpr.push("#BG = :bg");
+    }
+    if (updates.address !== undefined) {
+      ExpressionAttributeNames["#A"] = "Address"; ExpressionAttributeValues[":a"] = { S: String(updates.address) }; updateExpr.push("#A = :a");
     }
     if (updates.emergencyContacts !== undefined) {
       ExpressionAttributeNames["#C"] = "EmergencyContacts"; ExpressionAttributeValues[":c"] = { S: JSON.stringify(Array.isArray(updates.emergencyContacts) ? updates.emergencyContacts : []) }; updateExpr.push("#C = :c");

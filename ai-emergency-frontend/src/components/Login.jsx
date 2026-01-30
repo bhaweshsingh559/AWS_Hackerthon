@@ -69,52 +69,61 @@ export default function Login() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Welcome back</h2>
-        <p style={styles.subtitle}>Sign in with your email and password to access the SOS & chat assistant.</p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h2 className="auth-title">Welcome back</h2>
+          <div className="auth-tag">Secure access</div>
+        </div>
+        <p className="auth-subtitle">Sign in with your email and password to access the SOS & chat assistant.</p>
 
         <form onSubmit={handleLogin} style={{ width: "100%" }}>
-          <label style={styles.label}>Email</label>
-          <input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-            required
-          />
+          <div className="auth-grid">
+            <div className="auth-field auth-full">
+              <label className="auth-label">Email</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="auth-input"
+                required
+              />
+            </div>
 
-          <label style={styles.label}>Password</label>
-          <input
-            type="password"
-            placeholder="Your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
+            <div className="auth-field auth-full">
+              <label className="auth-label">Password</label>
+              <input
+                type="password"
+                placeholder="Your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+                required
+              />
+            </div>
+          </div>
 
-          {error && <div style={styles.error}>{error}</div>}
+          {error && <div className="auth-error">{error}</div>}
 
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button type="submit" style={styles.primary} disabled={loading}>
+          <div className="auth-actions">
+            <button type="submit" className="auth-primary" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </button>
             <button
               type="button"
               onClick={() => { setEmail(""); setPassword(""); setError(null); }}
-              style={styles.ghost}
+              className="auth-link"
             >
               Clear
             </button>
           </div>
         </form>
 
-        <div style={styles.footer}>
+        <div style={{ marginTop: 18, fontSize: 14, color: "var(--muted)" }}>
           <div>
             If you are a new user,{" "}
-            <Link to="/register" style={styles.link}>
+            <Link to="/register" className="auth-link">
               register first
             </Link>
             .
@@ -127,32 +136,3 @@ export default function Login() {
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#f8fafc",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 520,
-    padding: "28px",
-    borderRadius: 12,
-    background: "#ffffff",
-    boxShadow: "0 12px 30px rgba(2,6,23,0.08)",
-    border: "1px solid rgba(2,6,23,0.03)",
-  },
-  title: { margin: 0, color: "#0f172a", fontSize: 24, fontWeight: 800 },
-  subtitle: { marginTop: 8, marginBottom: 16, color: "#475569", fontSize: 14 },
-  label: { display: "block", fontSize: 13, color: "#475569", marginBottom: 6, marginTop: 10 },
-  input: { width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #e6eef2", fontSize: 15, outline: "none" },
-  primary: { background: "#007f5f", color: "#fff", border: "none", padding: "10px 18px", borderRadius: 10, cursor: "pointer", fontWeight: 700, minWidth: 120 },
-  ghost: { background: "transparent", color: "#0f172a", border: "1px solid #e6eef0", padding: "10px 14px", borderRadius: 10, cursor: "pointer" },
-  error: { marginTop: 10, color: "#b91c1c", fontSize: 14, fontWeight: 600 },
-  footer: { marginTop: 18, fontSize: 14, color: "#475569" },
-  link: { color: "#007f5f", fontWeight: 700, textDecoration: "none" },
-};

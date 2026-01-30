@@ -44,6 +44,78 @@ function makeMapsLink(location) {
   return `https://www.google.com/maps/search/?api=1&query=${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
+function makeMapsSearchLink(location, query) {
+  const baseQuery = encodeURIComponent(query || "emergency");
+  if (!location) return `https://www.google.com/maps/search/?api=1&query=${baseQuery}`;
+  const lat = Number(location.lat ?? location.latitude);
+  const lon = Number(location.lon ?? location.longitude);
+  if (Number.isNaN(lat) || Number.isNaN(lon)) return `https://www.google.com/maps/search/?api=1&query=${baseQuery}`;
+  const loc = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+  return `https://www.google.com/maps/search/?api=1&query=${baseQuery}%20near%20${encodeURIComponent(loc)}`;
+}
+
+const EMERGENCY_CANCEL_WINDOW_SECONDS = Number(
+  import.meta.env.VITE_VOICE_CANCEL_WINDOW_SECONDS || 10
+);
+
+const EMERGENCY_PHRASES = [
+  "help help",
+  "i can't breathe",
+  "i cant breathe",
+  "there's an accident",
+  "there is an accident",
+  "someone is unconscious",
+  "call police",
+  "call ambulance",
+];
+
+const INCIDENT_KEYWORDS = {
+  medical: ["can't breathe", "cant breathe", "unconscious", "not breathing", "heart", "bleeding", "injury"],
+  accident: ["accident", "car crash", "collision", "hit by", "vehicle"],
+  fire: ["fire", "smoke", "burning"],
+  crime: ["robbery", "attack", "assault", "violence", "police", "threat"],
+};
+
+function normalizeText(text) {
+  return (text || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function detectRepeatedPhrase(text, phrase = "help") {
+  const normalized = normalizeText(text);
+  if (!normalized) return false;
+  const tokens = normalized.split(" ");
+  let count = 0;
+  for (const token of tokens) {
+    if (token === phrase) count += 1;
+  }
+  return count >= 2 || normalized.includes(`${phrase} ${phrase}`);
+}
+
+function classifyIncident(text) {
+  const normalized = normalizeText(text);
+  for (const [type, keywords] of Object.entries(INCIDENT_KEYWORDS)) {
+    if (keywords.some((word) => normalized.includes(word))) return type;
+  }
+  return "unknown";
+}
+
+function localEmergencyDetection(text) {
+  const normalized = normalizeText(text);
+  const matches = EMERGENCY_PHRASES.filter((phrase) => normalized.includes(phrase));
+  const repeatedHelp = detectRepeatedPhrase(normalized, "help");
+  const detected = repeatedHelp || matches.length > 0;
+  const incidentType = classifyIncident(normalized);
+  return {
+    detected,
+    incidentType,
+    reasons: [
+      ...(repeatedHelp ? ["repeated help phrase detected"] : []),
+      ...matches.map((m) => `matched phrase: ${m}`),
+    ],
+    confidence: detected ? (repeatedHelp ? "high" : "medium") : "low",
+  };
+}
+
 export default function ChatWindow() {
   const [messages, setMessages] = useState([
     { id: genId("s-"), sender: "bot", text: "🚑 Emergency Assistant ready. Type or press the mic. Type 'SOS' or press the SOS button to send an alert." },
@@ -52,8 +124,18 @@ export default function ChatWindow() {
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
   const [lastParsed, setLastParsed] = useState(null);
+  const [pendingEmergency, setPendingEmergency] = useState(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("voiceFeedback") !== "off";
+    } catch {
+      return true;
+    }
+  });
+  const [assistanceLinks, setAssistanceLinks] = useState(null);
   const areaRef = useRef(null);
   const recognitionRef = useRef(null);
+  const pendingEmergencyRef = useRef(null);
 
   // THEME DETECTION (reads data-theme attr and watches changes)
   const [theme, setTheme] = useState(() => {
@@ -82,6 +164,17 @@ export default function ChatWindow() {
   }, [messages]);
 
   useEffect(() => {
+    pendingEmergencyRef.current = pendingEmergency;
+  }, [pendingEmergency]);
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
     const w = window;
     const SpeechRecognition = w.SpeechRecognition || w.webkitSpeechRecognition || null;
     if (!SpeechRecognition) return;
@@ -92,8 +185,16 @@ export default function ChatWindow() {
     r.onresult = (ev) => {
       const t = ev.results?.[0]?.[0]?.transcript;
       if (t) {
+        const normalized = normalizeText(t);
+        if (pendingEmergencyRef.current && normalized === "cancel") {
+          appendUserMessage(t);
+          cancelEmergency();
+          return;
+        }
         appendUserMessage(t);
-        sendAnalyze(t);
+        handleEmergencyDetection(t, { source: "voice" }).finally(() => {
+          sendAnalyze(t);
+        });
       }
     };
     r.onerror = (e) => {
@@ -104,6 +205,21 @@ export default function ChatWindow() {
     recognitionRef.current = r;
     return () => { try { r.stop(); } catch {} };
   }, []);
+
+  useEffect(() => {
+    if (!pendingEmergency) return undefined;
+    if (pendingEmergency.remaining <= 0) {
+      confirmEmergencyNow(pendingEmergency);
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      setPendingEmergency((prev) => {
+        if (!prev) return prev;
+        return { ...prev, remaining: prev.remaining - 1 };
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [pendingEmergency]);
 
   function appendUserMessage(text, providedId = null) {
     const id = providedId || genId("u-");
@@ -160,12 +276,19 @@ export default function ChatWindow() {
   async function handleSendClick() {
     if (!input || !input.trim()) return;
     const txt = input.trim();
+    if (pendingEmergency && normalizeText(txt) === "cancel") {
+      appendUserMessage(txt);
+      setInput("");
+      cancelEmergency();
+      return;
+    }
     appendUserMessage(txt);
     setInput("");
     if (/^\s*sos\s*$/i.test(txt)) {
       await triggerSOS("SOS: user requested immediate help");
       return;
     }
+    await handleEmergencyDetection(txt, { source: "text" });
     await sendAnalyze(txt);
   }
 
@@ -260,8 +383,12 @@ export default function ChatWindow() {
 
       if (resp && resp.success) {
         appendBotMessage("✅ SOS sent. Contacts will be notified.");
+        speakText("Emergency alert sent. Sharing your location with your contacts.");
         if (resp.preview) appendBotMessage(`Preview: ${resp.preview}`);
         if (resp.results) console.debug("SOS results:", resp.results);
+        const hospitalLink = makeMapsSearchLink(location, "nearest hospital");
+        const policeLink = makeMapsSearchLink(location, "nearest police station");
+        setAssistanceLinks({ hospital: hospitalLink, police: policeLink, location });
       } else {
         appendBotMessage("⚠️ Failed to send SOS. See console for details.");
         console.warn("postAlert response:", resp);
@@ -290,6 +417,79 @@ export default function ChatWindow() {
     setListening(false);
   }
 
+  async function handleEmergencyDetection(text, { source }) {
+    if (!text || pendingEmergency) return false;
+    const normalized = normalizeText(text);
+    if (!normalized) return false;
+    let detection = null;
+    try {
+      detection = await apiFetch("/api/emergency/detect", {
+        method: "POST",
+        body: JSON.stringify({ text: normalized, source }),
+      });
+      detection = detection?.result || detection;
+    } catch (err) {
+      console.warn("Emergency detect failed, using local fallback", err);
+      detection = localEmergencyDetection(normalized);
+    }
+
+    if (!detection?.detected) return false;
+
+    const incidentType = detection?.incidentType || "unknown";
+    appendBotMessage(
+      `🚨 Emergency detected (${incidentType}). Say "cancel" within ${EMERGENCY_CANCEL_WINDOW_SECONDS}s to stop.`
+    );
+    speakText(`Emergency detected. Say cancel within ${EMERGENCY_CANCEL_WINDOW_SECONDS} seconds to stop.`);
+    setPendingEmergency({
+      id: genId("em-"),
+      message: normalized,
+      incidentType,
+      remaining: EMERGENCY_CANCEL_WINDOW_SECONDS,
+      source,
+    });
+    return true;
+  }
+
+  async function confirmEmergencyNow(pending) {
+    if (!pending) return;
+    setPendingEmergency(null);
+    const incidentLabel = pending.incidentType && pending.incidentType !== "unknown"
+      ? `Incident type: ${pending.incidentType}.`
+      : "Incident type: unknown.";
+    await triggerSOS(`${pending.message} ${incidentLabel}`);
+  }
+
+  function cancelEmergency() {
+    if (!pendingEmergency) return;
+    setPendingEmergency(null);
+    appendBotMessage("✅ Emergency cancelled.");
+    speakText("Emergency cancelled.");
+  }
+
+  function speakText(text) {
+    if (!voiceEnabled || !text || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      console.warn("speech synthesis failed", err);
+    }
+  }
+
+  function toggleVoiceFeedback() {
+    setVoiceEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("voiceFeedback", next ? "on" : "off");
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  }
+
   // THEME-aware styles (simple inline approach)
   const isDark = theme === "dark";
   const containerBg = isDark ? "#0b1220" : "#ffffff";
@@ -300,12 +500,15 @@ export default function ChatWindow() {
   const metaColor = isDark ? "rgba(255,255,255,0.65)" : "rgba(15,23,42,0.65)";
 
   return (
-    <div style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", height: "78vh" }}>
+    <div className="emergency-chat" style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", height: "78vh" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <h3 style={{ margin: 0, color: textColor }}>Rakshak — Emergency Assistant</h3>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button className="btn btn--ghost" onClick={toggleVoiceFeedback}>
+            {voiceEnabled ? "Voice: On" : "Voice: Off"}
+          </button>
           <button className="btn btn--ghost" onClick={() => window.location.reload()}>Refresh</button>
-          <button className="btn btn--danger" onClick={() => triggerSOS()} disabled={loading}>SOS</button>
+          <button className="btn btn--danger pulse-alert" onClick={() => triggerSOS()} disabled={loading}>SOS</button>
         </div>
       </div>
 
@@ -342,6 +545,63 @@ export default function ChatWindow() {
           )}
         </div>
       </div>
+
+      {pendingEmergency && (
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          background: isDark ? "#2a0b0b" : "#fff1f2",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#fecdd3"}`,
+          color: textColor,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12
+        }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>Emergency detected</div>
+            <div style={{ fontSize: 13, opacity: 0.85 }}>
+              Sending alert in {pendingEmergency.remaining}s unless cancelled.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn btn--ghost" onClick={cancelEmergency}>Cancel</button>
+            <button className="btn btn--danger" onClick={() => confirmEmergencyNow(pendingEmergency)}>Send Now</button>
+          </div>
+        </div>
+      )}
+
+      {assistanceLinks && (
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          background: isDark ? "#0b1b14" : "#ecfdf3",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#bbf7d0"}`,
+          color: textColor,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
+        }}>
+          <div>
+            <div style={{ fontWeight: 700 }}>Nearby emergency assistance</div>
+            <div style={{ fontSize: 13, opacity: 0.85 }}>
+              Open directions to the nearest hospital or police station.
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a className="btn btn--ghost" href={assistanceLinks.hospital} target="_blank" rel="noreferrer">
+              Nearest Hospital
+            </a>
+            <a className="btn btn--ghost" href={assistanceLinks.police} target="_blank" rel="noreferrer">
+              Nearest Police
+            </a>
+          </div>
+        </div>
+      )}
 
       <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "flex-end" }}>
         <textarea

@@ -22,6 +22,9 @@ export async function login(req, res, next) {
       email: user.Email || user.email,
       name: user.Name || user.name,
       phone: user.Phone || user.phone,
+      medicalInfo: user.MedicalInfo || user.medicalInfo || "",
+      bloodGroup: user.BloodGroup || user.bloodGroup || "",
+      address: user.Address || user.address || "",
       emergencyContacts: user.EmergencyContacts ? JSON.parse(user.EmergencyContacts) : []
     };
     res.json({ success: true, user: safeUser, token });
@@ -38,6 +41,9 @@ export async function me(req, res, next) {
       email: u.Email || u.email,
       name: u.Name || u.name,
       phone: u.Phone || u.phone,
+      medicalInfo: u.MedicalInfo || u.medicalInfo || "",
+      bloodGroup: u.BloodGroup || u.bloodGroup || "",
+      address: u.Address || u.address || "",
       emergencyContacts: u.EmergencyContacts ? JSON.parse(u.EmergencyContacts) : [],
       location: u.Location ? JSON.parse(u.Location) : null
     };
@@ -49,13 +55,33 @@ export async function me(req, res, next) {
 
 export async function register(req, res, next) {
   try {
-    const { name, email, password, phone, location, emergencyContacts } = req.body || {};
+    const {
+      name,
+      email,
+      password,
+      phone,
+      location,
+      emergencyContacts,
+      medicalInfo,
+      bloodGroup,
+      address,
+    } = req.body || {};
     if (!email || !password) return res.status(400).json({ success: false, error: "email and password required" });
 
     const existing = await getUserByEmail(email);
     if (existing) return res.status(400).json({ success: false, error: "email already registered" });
 
-    const user = await createUser({ name, email, password, phone, location, emergencyContacts });
+    const user = await createUser({
+      name,
+      email,
+      password,
+      phone,
+      location,
+      emergencyContacts,
+      medicalInfo,
+      bloodGroup,
+      address,
+    });
 
     // After user created, try to subscribe emergency contacts to SNS topic (best-effort)
     const topic = process.env.SNS_TOPIC_ARN || process.env.SNS_TOPIC || null;

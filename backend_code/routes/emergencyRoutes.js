@@ -1,6 +1,6 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import { analyzeSymptoms, assistantChat } from "../controllers/emergencyController.js";
+import { analyzeSymptoms, assistantChat, detectEmergencyText } from "../controllers/emergencyController.js";
 import { publishCustomAlert } from "../services/alertService.js";
 import requireAuth from "../middlewares/requireAuth.js";
 
@@ -9,6 +9,8 @@ const router = express.Router();
 router.post("/analyze", requireAuth, analyzeSymptoms);
 
 router.post("/chat", requireAuth, assistantChat);
+
+router.post("/detect", requireAuth, detectEmergencyText);
 
 router.post("/alert", requireAuth, async (req, res, next) => {
   try {

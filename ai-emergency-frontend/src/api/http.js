@@ -85,4 +85,8 @@ export async function postUpdateProfile(updates = {}) {
   return await safeFetch("/api/user/profile", { method: "POST", body: updates });
 }
 
+export async function getDashboardOverview() {
+  return await safeFetch("/api/dashboard/overview", { method: "GET" });
+}
+
 export { API_BASE };

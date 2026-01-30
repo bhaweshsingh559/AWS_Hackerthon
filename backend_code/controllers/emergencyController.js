@@ -3,6 +3,7 @@ import { callBedrock } from "../services/bedrockService.js";
 import { logIncident } from "../services/dynamoService.js";
 import { publishAlertIfNeeded } from "../services/alertService.js";
 import { logger } from "../utils/logger.js";
+import { evaluateEmergencyText } from "../utils/emergencyDetection.js";
 
 function normalizeLocation(loc) {
   if (!loc || typeof loc !== "object") return null;
@@ -91,6 +92,26 @@ export async function assistantChat(req, res, next) {
     return res.json({ success: true, incidentId, result: parsed, raw: result.raw || null, usedModel: result.usedModel || null });
   } catch (err) {
     logger.error("assistantChat error", err);
+    next(err);
+  }
+}
+
+export async function detectEmergencyText(req, res, next) {
+  try {
+    const { text, source } = req.body || {};
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({ success: false, error: "text is required" });
+    }
+    const result = evaluateEmergencyText(text);
+    return res.json({
+      success: true,
+      result: {
+        ...result,
+        source: source || "unknown",
+      },
+    });
+  } catch (err) {
+    logger.error("detectEmergencyText error", err);
     next(err);
   }
 }
