@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getDashboardOverview } from "../api/http";
 
 export default function Chat() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -150,6 +152,23 @@ export default function Chat() {
         <button className="nav-icon nav-sos">SOS</button>
         <button className="nav-icon">📜</button>
         <button className="nav-icon">⚙️</button>
+      </div>
+
+      <div className="dashboard-shortcuts">
+        <div className="dashboard-shortcut-card">
+          <div>
+            <div className="shortcut-title">Home</div>
+            <div className="shortcut-subtitle">Overview & quick actions</div>
+          </div>
+          <button className="dashboard-call" onClick={() => navigate("/")}>Open</button>
+        </div>
+        <div className="dashboard-shortcut-card">
+          <div>
+            <div className="shortcut-title">Profile</div>
+            <div className="shortcut-subtitle">Update emergency contacts</div>
+          </div>
+          <button className="dashboard-call" onClick={() => navigate("/profile")}>Manage</button>
+        </div>
       </div>
     </div>
   );
