@@ -26,19 +26,24 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
 
 /* Dashboard */
 .dashboard-shell {
-  background: radial-gradient(circle at top, rgba(76,125,255,0.18), transparent 50%), var(--bg);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(46,231,242,0.12), transparent 40%),
+    radial-gradient(circle at 70% 70%, rgba(155,123,255,0.12), transparent 45%),
+    #0b0f19;
   padding: 24px;
-  min-height: calc(100vh - 144px);
-  border-radius: 24px;
+  min-height: 100vh;
+  border-radius: 0;
   position: relative;
   overflow: hidden;
+  color: #eaf0ff;
 }
 .dashboard-shell::before {
   content: "";
   position: absolute;
-  inset: -30% 0 0 -10%;
-  background: radial-gradient(circle, rgba(155,123,255,0.18), transparent 45%);
-  opacity: 0.6;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(46,231,242,0.08), transparent 55%),
+    radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 60%);
   pointer-events: none;
 }
 .dashboard-topbar {
@@ -46,12 +51,13 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  background: linear-gradient(90deg, rgba(12,18,38,0.95), rgba(18,26,55,0.95));
-  border: 1px solid rgba(35,49,79,0.6);
-  border-radius: 18px;
+  background: linear-gradient(90deg, rgba(11,15,25,0.98), rgba(18,26,55,0.92));
+  border: 1px solid rgba(35,49,79,0.8);
+  border-radius: 20px;
   color: #eaf0ff;
   position: relative;
   z-index: 1;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 }
 .dashboard-brand {
   display: flex;
@@ -108,11 +114,12 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   z-index: 1;
 }
 .dashboard-panel {
-  background: rgba(18,26,42,0.85);
-  border: 1px solid rgba(35,49,79,0.9);
+  background: rgba(18,26,42,0.72);
+  border: 1px solid rgba(35,49,79,0.8);
   border-radius: 20px;
   padding: 18px;
   color: #eaf0ff;
+  box-shadow: inset 0 0 20px rgba(15,23,42,0.35);
 }
 .dashboard-panel-title {
   font-size: 16px;
@@ -125,10 +132,11 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   gap: 12px;
 }
 .dashboard-card {
-  background: rgba(18,26,55,0.9);
-  border: 1px solid rgba(35,49,79,0.7);
+  background: rgba(18,26,55,0.85);
+  border: 1px solid rgba(35,49,79,0.6);
   border-radius: 14px;
   padding: 12px;
+  box-shadow: 0 10px 20px rgba(10,14,25,0.35);
 }
 .dashboard-card-label {
   font-size: 11px;
@@ -161,6 +169,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   justify-content: center;
   gap: 14px;
   color: #eaf0ff;
+  position: relative;
 }
 .orb-shell {
   width: 320px;
@@ -173,23 +182,23 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(46,231,242,0.2), transparent 70%);
-  box-shadow: 0 0 40px rgba(46,231,242,0.35);
+  background: radial-gradient(circle, rgba(46,231,242,0.18), transparent 70%);
+  box-shadow: 0 0 60px rgba(46,231,242,0.4);
   animation: floatGlow 6s ease-in-out infinite;
 }
 .orb-core {
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #0f1b35, #081022);
-  border: 2px solid rgba(76,125,255,0.8);
+  background: radial-gradient(circle at 30% 30%, #0f1b35, #071020);
+  border: 2px solid rgba(46,231,242,0.7);
   position: relative;
   overflow: hidden;
 }
 .orb-wave {
   position: absolute;
   inset: 30% -10%;
-  background: radial-gradient(circle, rgba(155,123,255,0.6), transparent 60%);
+  background: radial-gradient(circle, rgba(155,123,255,0.55), transparent 60%);
   filter: blur(4px);
   animation: wavePulse 5s ease-in-out infinite;
 }
@@ -200,6 +209,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
 .orb-status {
   font-size: 22px;
   font-weight: 600;
+  color: #eaf0ff;
 }
 .dashboard-mic {
   width: 52px;
@@ -222,6 +232,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   padding: 14px;
   display: grid;
   gap: 10px;
+  box-shadow: inset 0 0 18px rgba(15,23,42,0.35);
 }
 .dashboard-context-row {
   display: flex;
@@ -250,7 +261,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(18,26,55,0.9);
+  background: rgba(18,26,55,0.85);
   border: 1px solid rgba(35,49,79,0.7);
   padding: 12px;
   border-radius: 14px;
@@ -300,11 +311,12 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(18,26,42,0.9);
+  background: rgba(18,26,42,0.92);
   border: 1px solid rgba(35,49,79,0.8);
   padding: 12px 18px;
   border-radius: 20px;
   color: #eaf0ff;
+  box-shadow: 0 12px 24px rgba(8,12,22,0.4);
 }
 .nav-icon {
   width: 40px;
@@ -323,6 +335,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   color: #ff3b3b;
   font-weight: 700;
   border-color: rgba(255,59,59,0.5);
+  box-shadow: 0 0 18px rgba(255,59,59,0.35);
 }
 
 @keyframes wavePulse {
@@ -483,6 +496,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
 .topbar__title { font-weight:800; font-size:18px; color:var(--text) }
 .topbar__subtitle { font-size:12px; color:var(--muted) }
 .content { padding:20px; flex:1; overflow:auto; }
+.content--dashboard { padding: 0; background: #0b0f19; }
 .footer { padding:14px 20px; border-top:1px solid var(--glass); display:flex; justify-content:space-between; font-size:13px; color:var(--muted); }
 
 /* theme toggle button */
