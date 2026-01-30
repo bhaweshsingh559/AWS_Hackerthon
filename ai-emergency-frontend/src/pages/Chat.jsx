@@ -55,12 +55,17 @@ export default function Chat() {
     <div className="dashboard-shell">
       <div className="dashboard-topbar">
         <div className="dashboard-brand">
-          <div className="dashboard-logo">Rakshak</div>
-          <div className="dashboard-subtitle">AI Emergency Assistant</div>
+          <div className="dashboard-brand-logo">
+            <span className="dashboard-logo-mark" />
+          </div>
+          <div>
+            <div className="dashboard-logo">Rakshak</div>
+            <div className="dashboard-subtitle">AI Emergency Assistant</div>
+          </div>
         </div>
         <div className="dashboard-actions">
-          <button className="dashboard-icon">🔔</button>
-          <button className="dashboard-icon">🌓</button>
+          <button className="dashboard-icon" aria-label="Notifications">🔔</button>
+          <button className="dashboard-icon" aria-label="Theme">🌓</button>
           <div className="dashboard-avatar">👤</div>
           {user.premium && <span className="dashboard-pill">Premium</span>}
         </div>
@@ -80,6 +85,7 @@ export default function Chat() {
               </div>
             ))}
           </div>
+          <button className="dashboard-download" aria-label="Download activity">⬇️</button>
         </div>
 
         <div className="dashboard-center">
@@ -88,6 +94,7 @@ export default function Chat() {
             <div className="orb-core">
               <div className="orb-wave" />
               <div className="orb-wave orb-wave--alt" />
+              <div className="orb-particles" />
             </div>
           </div>
           <div className="orb-status">{hero.status}</div>
