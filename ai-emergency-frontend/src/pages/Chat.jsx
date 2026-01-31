@@ -97,11 +97,25 @@ export default function Chat() {
     ];
   }, [overview]);
 
-  const hospitals = overview?.hospitals || [
-    { name: "City Hospital", distanceKm: 1.2, status: "away" },
-    { name: "Apollo Clinic", distanceKm: 1.6, status: "away" },
-    { name: "Rakshak Care", distanceKm: 2.1, status: "away" },
+  const defaultHospitals = [
+    { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
+    { name: "Apollo Clinic", distanceKm: 18.2, rating: 4.7, status: "available" },
+    { name: "Rakshak Care", distanceKm: 24.5, rating: 4.6, status: "available" },
+    { name: "Medilife Specialty", distanceKm: 27.1, rating: 4.5, status: "available" },
   ];
+
+  const hospitals = useMemo(() => {
+    const source = overview?.hospitals || defaultHospitals;
+    const normalized = source.map((hospital) => ({
+      ...hospital,
+      rating: hospital.rating ?? 4.6,
+      distanceKm: hospital.distanceKm ?? 22.0,
+      status: hospital.status || "available",
+    }));
+    return normalized
+      .filter((hospital) => hospital.distanceKm <= 30)
+      .sort((a, b) => b.rating - a.rating || a.distanceKm - b.distanceKm);
+  }, [overview]);
 
   const hero = overview?.hero || {
     status: "Listening...",
@@ -111,7 +125,10 @@ export default function Chat() {
   };
 
   const user = overview?.user || { name: "Responder", premium: true };
-  const locationQuery = encodeURIComponent(`${hero.location} hospitals`);
+  const displayLocation = currentLocation
+    ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`
+    : hero.location;
+  const locationQuery = encodeURIComponent(`${displayLocation} hospitals`);
   const mapUrl = currentLocation
     ? `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lon}&z=14&output=embed`
     : null;
@@ -196,7 +213,7 @@ export default function Chat() {
             </div>
             <div className="dashboard-context-row">
               <span>Location</span>
-              <strong>{hero.location}</strong>
+              <strong>{displayLocation}</strong>
             </div>
             <div className="dashboard-context-row">
               <span>Category</span>
@@ -224,7 +241,9 @@ export default function Chat() {
               <div key={hospital.name} className="dashboard-hospital-card">
                 <div>
                   <div className="dashboard-hospital-name">{hospital.name}</div>
-                  <div className="dashboard-hospital-meta">{hospital.distanceKm} km / {hospital.status}</div>
+                  <div className="dashboard-hospital-meta">
+                    {hospital.distanceKm} km • ⭐ {hospital.rating} • {hospital.status}
+                  </div>
                 </div>
                 <button className="dashboard-call" onClick={() => handleHospitalView(hospital.name)}>📞</button>
               </div>
