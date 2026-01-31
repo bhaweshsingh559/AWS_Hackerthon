@@ -8,6 +8,7 @@ export default function Chat() {
   const [locationStatus, setLocationStatus] = useState("idle");
   const [currentLocation, setCurrentLocation] = useState(null);
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
+  const [pendingCall, setPendingCall] = useState(null);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -139,6 +140,32 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
+    if (!pendingCall) return undefined;
+    if (pendingCall.remaining <= 0) {
+      handleConfirmCall(pendingCall);
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      setPendingCall((prev) => {
+        if (!prev) return prev;
+        return { ...prev, remaining: prev.remaining - 1 };
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [pendingCall]);
+
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (!pendingCall) return;
+      if (event.key === "1") {
+        handleSendWhatsApp(pendingCall);
+      }
+    };
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [pendingCall]);
+
+  useEffect(() => {
     let mounted = true;
     const loadHospitals = async () => {
       const coords = await requestLocation();
@@ -206,6 +233,14 @@ export default function Chat() {
   };
 
   const user = overview?.user || { name: "Responder", premium: true };
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const emergencyContact = storedUser?.emergencyContacts?.[0] || "N/A";
   const displayLocation = currentLocation
     ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`
     : hero.location;
@@ -217,6 +252,58 @@ export default function Chat() {
   const handleHospitalView = (hospital) => {
     const query = encodeURIComponent(`${hospital.name} ${displayLocation}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
+  };
+
+  const speakAnnouncement = (hospital) => {
+    if (!("speechSynthesis" in window)) return;
+    const name = user?.name || "the user";
+    const phone = emergencyContact === "N/A" ? "no emergency contact available" : emergencyContact;
+    const text = `This is Rakshak. ${name} needs urgent help. Emergency contact ${phone}. If you can assist, press one to send the user's location on WhatsApp.`;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      console.warn("speech synthesis failed", err);
+    }
+  };
+
+  const handleCallHospital = (hospital) => {
+    if (!hospital?.phone || hospital.phone === "N/A") {
+      alert("No phone number available for this hospital.");
+      return;
+    }
+    setPendingCall({
+      hospital,
+      remaining: 10,
+    });
+    speakAnnouncement(hospital);
+  };
+
+  const handleConfirmCall = (pending) => {
+    if (!pending?.hospital?.phone || pending.hospital.phone === "N/A") {
+      setPendingCall(null);
+      return;
+    }
+    const tel = pending.hospital.phone.replace(/[^+\d]/g, "");
+    window.open(`tel:${tel}`, "_self");
+    setPendingCall(null);
+  };
+
+  const handleCancelCall = () => {
+    setPendingCall(null);
+  };
+
+  const handleSendWhatsApp = (pending) => {
+    if (!pending) return;
+    const locationLink = currentLocation
+      ? `https://www.google.com/maps/search/?api=1&query=${currentLocation.lat},${currentLocation.lon}`
+      : "Location unavailable";
+    const name = user?.name || "User";
+    const message = `Emergency assistance needed for ${name}. Location: ${locationLink}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -329,10 +416,25 @@ export default function Chat() {
                     {hospital.phone} {hospital.address ? `• ${hospital.address}` : ""}
                   </div>
                 </div>
-                <button className="dashboard-call" onClick={() => handleHospitalView(hospital)}>📞</button>
+                <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>📞</button>
               </div>
             ))}
           </div>
+
+          {pendingCall && (
+            <div className="dashboard-callout">
+              <div>
+                <div className="dashboard-callout-title">Calling {pendingCall.hospital.name}</div>
+                <div className="dashboard-callout-meta">
+                  Auto-dialing in {pendingCall.remaining}s. Press 1 to send WhatsApp location.
+                </div>
+              </div>
+              <div className="dashboard-callout-actions">
+                <button className="dashboard-link" onClick={() => handleSendWhatsApp(pendingCall)}>Send WhatsApp (1)</button>
+                <button className="dashboard-link" onClick={handleCancelCall}>Cancel</button>
+              </div>
+            </div>
+          )}
 
           <div className="dashboard-map-card">
             {mapUrl ? (
