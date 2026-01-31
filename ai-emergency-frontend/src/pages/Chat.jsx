@@ -3,6 +3,141 @@ import { useNavigate } from "react-router-dom";
 import { getDashboardOverview, getNearbyHospitals } from "../api/http";
 
 export default function Chat() {
+  const IconBell = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M15 18H9a3 3 0 0 0 6 0ZM18 16V11a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconMoon = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M21 14.5A8.5 8.5 0 0 1 9.5 3a7.5 7.5 0 1 0 11.5 11.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconMapPin = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+  const IconUser = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M20 21a8 8 0 1 0-16 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+  const IconMic = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M12 15a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19 11a7 7 0 0 1-14 0M12 19v3M8 22h8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconPhone = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M4 6.5c0 7.5 6.1 13.6 13.6 13.6h1.4a2 2 0 0 0 2-2v-2.4a2 2 0 0 0-1.4-1.9l-3.2-1a2 2 0 0 0-2.1.6l-1.1 1.3a12 12 0 0 1-5.1-5.1l1.3-1.1a2 2 0 0 0 .6-2.1l-1-3.2A2 2 0 0 0 7.3 2H5a2 2 0 0 0-2 2v2.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconHome = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2v-9Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconChat = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconList = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+  const IconSettings = (props) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path
+        d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 0 1 7 3.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [locationStatus, setLocationStatus] = useState("idle");
@@ -450,12 +585,16 @@ export default function Chat() {
             aria-label="Notifications"
             onClick={() => handleScrollTo(contextRef)}
           >
-            🔔
+            <IconBell className="icon" />
           </button>
-          <button className="dashboard-icon" aria-label="Theme">🌓</button>
-          <button className="dashboard-icon" aria-label="Locate" onClick={requestLocation}>📍</button>
+          <button className="dashboard-icon" aria-label="Theme">
+            <IconMoon className="icon" />
+          </button>
+          <button className="dashboard-icon" aria-label="Locate" onClick={requestLocation}>
+            <IconMapPin className="icon" />
+          </button>
           <button className="dashboard-avatar" onClick={() => navigate("/profile")} aria-label="Profile">
-            👤
+            <IconUser className="icon" />
           </button>
           {user.premium && <span className="dashboard-pill">Premium</span>}
         </div>
@@ -500,7 +639,7 @@ export default function Chat() {
           </div>
           <div className="orb-status">{isListening ? "Listening..." : hero.status}</div>
           <button className={`dashboard-mic ${isListening ? "dashboard-mic--active" : ""}`} onClick={handleMicToggle}>
-            🎙️
+            <IconMic className="icon" />
           </button>
           {isEmergencyMode && (
             <button className="dashboard-emergency-cancel" onClick={handleCancelEmergency}>
@@ -580,7 +719,9 @@ export default function Chat() {
                       {hospital.phone} {hospital.address ? `• ${hospital.address}` : ""}
                     </div>
                   </div>
-                  <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>📞</button>
+                  <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>
+                    <IconPhone className="icon" />
+                  </button>
                 </div>
               );
             })}
@@ -643,11 +784,19 @@ export default function Chat() {
       </div>
 
       <div className="dashboard-bottom-nav">
-        <button className="nav-icon" onClick={() => navigate("/")}>🏠</button>
-        <button className="nav-icon active" onClick={() => navigate("/chat")}>💬</button>
+        <button className="nav-icon" onClick={() => navigate("/")}>
+          <IconHome className="icon" />
+        </button>
+        <button className="nav-icon active" onClick={() => navigate("/chat")}>
+          <IconChat className="icon" />
+        </button>
         <button className="nav-icon nav-sos" onClick={() => handleScrollTo(centerRef)}>SOS</button>
-        <button className="nav-icon" onClick={() => handleScrollTo(activityRef)}>📜</button>
-        <button className="nav-icon" onClick={() => navigate("/profile")}>⚙️</button>
+        <button className="nav-icon" onClick={() => handleScrollTo(activityRef)}>
+          <IconList className="icon" />
+        </button>
+        <button className="nav-icon" onClick={() => navigate("/profile")}>
+          <IconSettings className="icon" />
+        </button>
       </div>
 
       <div className="dashboard-shortcuts">

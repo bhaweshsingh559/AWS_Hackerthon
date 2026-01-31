@@ -134,6 +134,22 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   place-items: center;
   cursor: pointer;
 }
+.dashboard-icon .icon,
+.dashboard-avatar .icon,
+.dashboard-mic .icon,
+.dashboard-call .icon,
+.nav-icon .icon {
+  width: 18px;
+  height: 18px;
+}
+.dashboard-mic .icon {
+  width: 22px;
+  height: 22px;
+}
+.dashboard-call .icon {
+  width: 16px;
+  height: 16px;
+}
 .dashboard-avatar {
   width: 36px;
   height: 36px;
