@@ -432,7 +432,13 @@ export default function Chat() {
               return (
                 <div key={hospital.name} className="dashboard-hospital-card">
                   <div>
-                    <div className="dashboard-hospital-name">{hospital.name}</div>
+                  <button
+                    className="dashboard-hospital-name dashboard-hospital-link"
+                    type="button"
+                    onClick={() => handleHospitalView(hospital)}
+                  >
+                    {hospital.name}
+                  </button>
                     <div className="dashboard-hospital-meta">
                       {hospital.distanceKm} km • ⭐ {ratingLabel} • {hospital.status}
                     </div>
