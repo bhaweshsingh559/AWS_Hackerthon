@@ -52,7 +52,7 @@ export default function Chat() {
         return resp.hospitals.map((hospital) => ({
           ...hospital,
           distanceKm: null,
-          rating: hospital.rating ?? "N/A",
+          rating: hospital.rating ?? null,
         }));
       }
     } catch (err) {
@@ -81,7 +81,7 @@ export default function Chat() {
         return {
           name: item.tags?.name || "Nearby Hospital",
           distanceKm: null,
-          rating: item.tags?.rating || item.tags?.stars || "N/A",
+          rating: item.tags?.rating || item.tags?.stars || null,
           phone: item.tags?.phone || item.tags?.["contact:phone"] || "N/A",
           address: item.tags?.["addr:full"] || item.tags?.["addr:street"] || "",
           lat,
@@ -226,7 +226,7 @@ export default function Chat() {
       : (overview?.hospitals || defaultHospitals);
     const normalized = source.map((hospital) => ({
       ...hospital,
-      rating: hospital.rating ?? 4.6,
+      rating: hospital.rating ?? null,
       distanceKm: hospital.distanceKm ?? 22.0,
       phone: hospital.phone || "N/A",
       address: hospital.address || "",
@@ -426,20 +426,24 @@ export default function Chat() {
             </button>
           </div>
           <div className="dashboard-hospital-list dashboard-hospital-scroll">
-            {hospitals.map((hospital) => (
-              <div key={hospital.name} className="dashboard-hospital-card">
-                <div>
-                  <div className="dashboard-hospital-name">{hospital.name}</div>
-                  <div className="dashboard-hospital-meta">
-                    {hospital.distanceKm} km • ⭐ {hospital.rating} • {hospital.status}
+            {hospitals.map((hospital) => {
+              const ratingValue = Number(hospital.rating);
+              const ratingLabel = Number.isFinite(ratingValue) && ratingValue > 0 ? ratingValue.toFixed(1) : "Not rated";
+              return (
+                <div key={hospital.name} className="dashboard-hospital-card">
+                  <div>
+                    <div className="dashboard-hospital-name">{hospital.name}</div>
+                    <div className="dashboard-hospital-meta">
+                      {hospital.distanceKm} km • ⭐ {ratingLabel} • {hospital.status}
+                    </div>
+                    <div className="dashboard-hospital-meta">
+                      {hospital.phone} {hospital.address ? `• ${hospital.address}` : ""}
+                    </div>
                   </div>
-                  <div className="dashboard-hospital-meta">
-                    {hospital.phone} {hospital.address ? `• ${hospital.address}` : ""}
-                  </div>
+                  <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>📞</button>
                 </div>
-                <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>📞</button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {pendingCall && (
