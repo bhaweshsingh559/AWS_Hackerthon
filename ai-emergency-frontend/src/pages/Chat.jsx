@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardActivity, getDashboardOverview, getNearbyHospitals } from "../api/http";
+import { getDashboardActivity, getDashboardOverview, getNearbyHospitals, getWearableSummary } from "../api/http";
 
 export default function Chat() {
   const [overview, setOverview] = useState(null);
@@ -9,6 +9,7 @@ export default function Chat() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
+  const [wearableSummary, setWearableSummary] = useState(null);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -152,6 +153,24 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+    async function loadWearable() {
+      try {
+        const resp = await getWearableSummary();
+        if (mounted) setWearableSummary(resp?.summary || null);
+      } catch (err) {
+        console.warn("wearable summary failed", err);
+      }
+    }
+    loadWearable();
+    const interval = setInterval(loadWearable, 60000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!pendingCall) return undefined;
     if (pendingCall.remaining <= 0) {
       handleConfirmCall(pendingCall);
@@ -212,6 +231,10 @@ export default function Chat() {
       { label: "Cartoons", percent: 35 },
     ];
   }, [overview]);
+
+  const wearableMetrics = wearableSummary?.metrics || [];
+  const wearableProvider = wearableSummary?.provider || "Not connected";
+  const wearableProviders = wearableSummary?.supportedProviders || [];
 
   const defaultHospitals = [
     { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
@@ -377,6 +400,28 @@ export default function Chat() {
           >
             ⬇️
           </button>
+
+          <div className="dashboard-panel-title" style={{ marginTop: 20 }}>Wearable Snapshot</div>
+          <div className="dashboard-wearable-card">
+            <div className="dashboard-wearable-header">
+              <span>{wearableProvider}</span>
+              <span className="dashboard-wearable-pill">Live</span>
+            </div>
+            <div className="dashboard-wearable-grid">
+              {wearableMetrics.map((metric) => (
+                <div key={metric.label} className="dashboard-wearable-item">
+                  <div className="dashboard-wearable-label">{metric.label}</div>
+                  <div className="dashboard-wearable-value">{metric.value} {metric.unit}</div>
+                  <div className="dashboard-wearable-meta">{metric.trend}</div>
+                </div>
+              ))}
+            </div>
+            {wearableProviders.length > 0 && (
+              <div className="dashboard-wearable-meta">
+                Connect: {wearableProviders.join(", ")}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="dashboard-center" ref={centerRef}>
