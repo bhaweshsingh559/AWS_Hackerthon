@@ -384,6 +384,12 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   border: 1px solid rgba(35,49,79,0.7);
   padding: 12px;
 }
+.dashboard-map-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #8aa1c6;
+  text-align: center;
+}
 .dashboard-map-placeholder {
   height: 160px;
   border-radius: 12px;

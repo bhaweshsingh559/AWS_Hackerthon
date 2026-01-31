@@ -5,6 +5,8 @@ import { getDashboardActivity, getDashboardOverview } from "../api/http";
 export default function Chat() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [locationStatus, setLocationStatus] = useState("idle");
+  const [currentLocation, setCurrentLocation] = useState(null);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -13,6 +15,25 @@ export default function Chat() {
   const handleScrollTo = (ref) => {
     if (!ref.current) return;
     ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const requestLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("unsupported");
+      return;
+    }
+    setLocationStatus("locating");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCurrentLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy });
+        setLocationStatus("ready");
+      },
+      (err) => {
+        console.warn("dashboard geolocation failed", err);
+        setLocationStatus("blocked");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   const handleDownload = async () => {
@@ -87,6 +108,9 @@ export default function Chat() {
 
   const user = overview?.user || { name: "Responder", premium: true };
   const locationQuery = encodeURIComponent(`${hero.location} hospitals`);
+  const mapUrl = currentLocation
+    ? `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lon}&z=14&output=embed`
+    : null;
 
   const handleHospitalView = (hospitalName) => {
     const query = encodeURIComponent(`${hospitalName} ${hero.location}`);
@@ -114,6 +138,7 @@ export default function Chat() {
             🔔
           </button>
           <button className="dashboard-icon" aria-label="Theme">🌓</button>
+          <button className="dashboard-icon" aria-label="Locate" onClick={requestLocation}>📍</button>
           <button className="dashboard-avatar" onClick={() => navigate("/profile")} aria-label="Profile">
             👤
           </button>
@@ -203,10 +228,27 @@ export default function Chat() {
           </div>
 
           <div className="dashboard-map-card">
-            <div className="dashboard-map-placeholder">
-              <div className="dashboard-map-pin" />
-              <div className="dashboard-map-pin dashboard-map-pin--alt" />
-            </div>
+            {mapUrl ? (
+              <iframe
+                title="Dashboard location map"
+                src={mapUrl}
+                width="100%"
+                height="220"
+                style={{ border: 0, borderRadius: 14 }}
+                loading="lazy"
+              />
+            ) : (
+              <div className="dashboard-map-placeholder">
+                <div className="dashboard-map-pin" />
+                <div className="dashboard-map-pin dashboard-map-pin--alt" />
+                <div className="dashboard-map-hint">
+                  {locationStatus === "locating" && "Detecting location…"}
+                  {locationStatus === "blocked" && "Location blocked. Tap the pin icon to allow."}
+                  {locationStatus === "unsupported" && "Location not supported."}
+                  {locationStatus === "idle" && "Tap the pin icon to show your location."}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

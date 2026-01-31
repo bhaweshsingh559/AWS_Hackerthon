@@ -127,6 +127,7 @@ export default function ChatWindow() {
   const [pendingEmergency, setPendingEmergency] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [lastLocation, setLastLocation] = useState(null);
+  const [micStatus, setMicStatus] = useState("idle");
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     try {
       return localStorage.getItem("voiceFeedback") !== "off";
@@ -204,6 +205,7 @@ export default function ChatWindow() {
     r.onerror = (e) => {
       console.warn("SpeechRecognition error", e);
       setListening(false);
+      setMicStatus("blocked");
     };
     r.onend = () => setListening(false);
     recognitionRef.current = r;
@@ -443,6 +445,7 @@ export default function ChatWindow() {
       return;
     }
     try {
+      setMicStatus("listening");
       r.start();
     } catch (e) {
       console.warn("Failed to start recognition", e);
@@ -453,6 +456,23 @@ export default function ChatWindow() {
     const r = recognitionRef.current;
     try { r?.stop(); } catch (e) { console.warn("stop error", e); }
     setListening(false);
+    setMicStatus("idle");
+  }
+
+  async function requestMicAccess() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicStatus("unsupported");
+      return;
+    }
+    setMicStatus("prompting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMicStatus("ready");
+    } catch (err) {
+      console.warn("Mic permission error", err);
+      setMicStatus("blocked");
+    }
   }
 
   async function handleEmergencyDetection(text, { source }) {
@@ -548,6 +568,9 @@ export default function ChatWindow() {
           <button className="btn btn--ghost" onClick={toggleVoiceFeedback}>
             {voiceEnabled ? "Voice: On" : "Voice: Off"}
           </button>
+          <button className="btn btn--ghost" onClick={requestMicAccess}>
+            {micStatus === "prompting" ? "Requesting mic..." : "Enable mic"}
+          </button>
           <button className="btn btn--ghost" onClick={() => requestLocation(7000)}>
             {locationStatus === "locating" ? "Locating..." : "Detect location"}
           </button>
@@ -556,6 +579,12 @@ export default function ChatWindow() {
         </div>
       </div>
       <div style={{ marginBottom: 10, fontSize: 12, color: metaColor }}>
+        {micStatus === "ready" && <>Microphone ready • press Mic to start listening.</>}
+        {micStatus === "blocked" && <>Microphone blocked. Allow permission in your browser.</>}
+        {micStatus === "unsupported" && <>Microphone permission not supported in this browser.</>}
+        {micStatus === "prompting" && <>Requesting microphone permission…</>}
+        {micStatus === "idle" && <>Microphone idle.</>}
+        <span style={{ margin: "0 6px" }}>•</span>
         {locationStatus === "ready" && lastLocation && (
           <>Location ready • {lastLocation.lat.toFixed(4)}, {lastLocation.lon.toFixed(4)}</>
         )}
