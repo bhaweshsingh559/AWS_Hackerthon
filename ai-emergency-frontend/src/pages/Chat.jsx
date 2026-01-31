@@ -108,18 +108,6 @@ export default function Chat() {
       />
     </svg>
   );
-  const IconList = (props) => (
-    <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
-      <path
-        d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
   const IconSettings = (props) => (
     <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
       <path
@@ -791,8 +779,8 @@ export default function Chat() {
           <IconChat className="icon" />
         </button>
         <button className="nav-icon nav-sos" onClick={() => handleScrollTo(centerRef)}>SOS</button>
-        <button className="nav-icon" onClick={() => handleScrollTo(activityRef)}>
-          <IconList className="icon" />
+        <button className="nav-icon" onClick={() => navigate("/profile")}>
+          <IconUser className="icon" />
         </button>
         <button className="nav-icon" onClick={() => navigate("/profile")}>
           <IconSettings className="icon" />
