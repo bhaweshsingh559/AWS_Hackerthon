@@ -10,6 +10,7 @@ export default function Chat() {
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
   const [wearableSummary, setWearableSummary] = useState(null);
+  const [showWearableModal, setShowWearableModal] = useState(false);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -237,9 +238,30 @@ export default function Chat() {
   const wearableProviders = wearableSummary?.supportedProviders || [];
   const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
 
-  const handleConnectWearable = (provider) => {
-    alert(`Connecting ${provider} is coming soon. We'll guide you through OAuth pairing once available.`);
+  const handleConnectWearable = () => {
+    setShowWearableModal(true);
   };
+
+  const wearableProvidersConfig = [
+    {
+      id: "apple",
+      name: "Apple Watch",
+      link: "https://www.apple.com/ios/health/",
+      note: "Sign in with Apple Fitness to sync Health data.",
+    },
+    {
+      id: "noise",
+      name: "Noise Watch",
+      link: "https://www.gonoise.com/pages/noise-health",
+      note: "Open Noise Health app to authorize sync.",
+    },
+    {
+      id: "boat",
+      name: "boAt Watch",
+      link: "https://www.boat-lifestyle.com/pages/boat-crest",
+      note: "Use boAt Crest app to connect.",
+    },
+  ];
 
   const defaultHospitals = [
     { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
@@ -428,12 +450,19 @@ export default function Chat() {
             )}
             {!hasWearableConnection && wearableProviders.length > 0 && (
               <div className="dashboard-wearable-actions">
+                <button
+                  className="dashboard-wearable-action"
+                  type="button"
+                  onClick={handleConnectWearable}
+                >
+                  Add wearable
+                </button>
                 {wearableProviders.map((provider) => (
                   <button
                     key={provider}
                     className="dashboard-wearable-action"
                     type="button"
-                    onClick={() => handleConnectWearable(provider)}
+                    onClick={handleConnectWearable}
                   >
                     Connect {provider}
                   </button>
@@ -526,6 +555,34 @@ export default function Chat() {
                 <div className="dashboard-callout-actions">
                   <button className="dashboard-link" onClick={() => handleSendWhatsApp(pendingCall)}>Send WhatsApp (1)</button>
                   <button className="dashboard-link" onClick={handleCancelCall}>Cancel call</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showWearableModal && (
+            <div className="dashboard-callout-overlay" role="dialog" aria-modal="true">
+              <div className="dashboard-wearable-modal">
+                <div className="dashboard-callout-title">Connect a wearable</div>
+                <div className="dashboard-callout-meta">
+                  Choose your device to continue to its fitness portal or app.
+                </div>
+                <div className="dashboard-wearable-modal-grid">
+                  {wearableProvidersConfig.map((provider) => (
+                    <a
+                      key={provider.id}
+                      className="dashboard-wearable-provider"
+                      href={provider.link}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <div className="dashboard-wearable-provider-name">{provider.name}</div>
+                      <div className="dashboard-wearable-provider-note">{provider.note}</div>
+                    </a>
+                  ))}
+                </div>
+                <div className="dashboard-callout-actions">
+                  <button className="dashboard-link" onClick={() => setShowWearableModal(false)}>Close</button>
                 </div>
               </div>
             </div>
