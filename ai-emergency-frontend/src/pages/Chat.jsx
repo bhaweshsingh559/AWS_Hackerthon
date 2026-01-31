@@ -270,12 +270,13 @@ export default function Chat() {
   };
 
   const handleCallHospital = (hospital) => {
-    if (!hospital?.phone || hospital.phone === "N/A") {
-      alert("No phone number available for this hospital.");
-      return;
-    }
+    const fallbackPhone = "108";
+    const phone = hospital?.phone && hospital.phone !== "N/A" ? hospital.phone : fallbackPhone;
     setPendingCall({
-      hospital,
+      hospital: {
+        ...hospital,
+        phone,
+      },
       remaining: 10,
     });
     speakAnnouncement(hospital);
