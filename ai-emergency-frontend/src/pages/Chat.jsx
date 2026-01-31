@@ -1,11 +1,45 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardOverview } from "../api/http";
+import { getDashboardActivity, getDashboardOverview } from "../api/http";
 
 export default function Chat() {
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const activityRef = useRef(null);
+  const centerRef = useRef(null);
+  const contextRef = useRef(null);
+
+  const handleScrollTo = (ref) => {
+    if (!ref.current) return;
+    ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleDownload = async () => {
+    try {
+      const resp = await getDashboardActivity();
+      const rows = resp?.activity || [];
+      if (rows.length === 0) return;
+      const header = Object.keys(rows[0]);
+      const csv = [
+        header.join(","),
+        ...rows.map((row) =>
+          header.map((key) => `"${String(row[key] ?? "").replace(/"/g, '""')}"`).join(",")
+        ),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "dashboard-activity.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn("dashboard activity download failed", err);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -52,6 +86,12 @@ export default function Chat() {
   };
 
   const user = overview?.user || { name: "Responder", premium: true };
+  const locationQuery = encodeURIComponent(`${hero.location} hospitals`);
+
+  const handleHospitalView = (hospitalName) => {
+    const query = encodeURIComponent(`${hospitalName} ${hero.location}`);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="dashboard-shell">
@@ -66,15 +106,23 @@ export default function Chat() {
           </div>
         </div>
         <div className="dashboard-actions">
-          <button className="dashboard-icon" aria-label="Notifications">🔔</button>
+          <button
+            className="dashboard-icon"
+            aria-label="Notifications"
+            onClick={() => handleScrollTo(contextRef)}
+          >
+            🔔
+          </button>
           <button className="dashboard-icon" aria-label="Theme">🌓</button>
-          <div className="dashboard-avatar">👤</div>
+          <button className="dashboard-avatar" onClick={() => navigate("/profile")} aria-label="Profile">
+            👤
+          </button>
           {user.premium && <span className="dashboard-pill">Premium</span>}
         </div>
       </div>
 
       <div className="dashboard-main">
-        <div className="dashboard-panel dashboard-left">
+        <div className="dashboard-panel dashboard-left" ref={activityRef}>
           <div className="dashboard-panel-title">Previous Activity</div>
           <div className="dashboard-stats-grid">
             {stats.map((stat) => (
@@ -87,10 +135,16 @@ export default function Chat() {
               </div>
             ))}
           </div>
-          <button className="dashboard-download" aria-label="Download activity">⬇️</button>
+          <button
+            className="dashboard-download"
+            aria-label="Download activity"
+            onClick={handleDownload}
+          >
+            ⬇️
+          </button>
         </div>
 
-        <div className="dashboard-center">
+        <div className="dashboard-center" ref={centerRef}>
           <div className="orb-shell">
             <div className="orb-outer" />
             <div className="orb-core">
@@ -104,7 +158,7 @@ export default function Chat() {
           {loading && <div className="dashboard-hint">Syncing emergency context…</div>}
         </div>
 
-        <div className="dashboard-panel dashboard-right">
+        <div className="dashboard-panel dashboard-right" ref={contextRef}>
           <div className="dashboard-panel-title">Context</div>
           <div className="dashboard-context-card">
             <div className="dashboard-context-row">
@@ -123,7 +177,18 @@ export default function Chat() {
 
           <div className="dashboard-panel-title dashboard-title-inline">
             Nearest Hospitals
-            <span className="dashboard-link">View all</span>
+            <button
+              className="dashboard-link"
+              onClick={() =>
+                window.open(
+                  `https://www.google.com/maps/search/?api=1&query=${locationQuery}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+            >
+              View all
+            </button>
           </div>
           <div className="dashboard-hospital-list">
             {hospitals.map((hospital) => (
@@ -132,7 +197,7 @@ export default function Chat() {
                   <div className="dashboard-hospital-name">{hospital.name}</div>
                   <div className="dashboard-hospital-meta">{hospital.distanceKm} km / {hospital.status}</div>
                 </div>
-                <button className="dashboard-call">📞</button>
+                <button className="dashboard-call" onClick={() => handleHospitalView(hospital.name)}>📞</button>
               </div>
             ))}
           </div>
@@ -147,11 +212,11 @@ export default function Chat() {
       </div>
 
       <div className="dashboard-bottom-nav">
-        <button className="nav-icon active">🏠</button>
-        <button className="nav-icon">💬</button>
-        <button className="nav-icon nav-sos">SOS</button>
-        <button className="nav-icon">📜</button>
-        <button className="nav-icon">⚙️</button>
+        <button className="nav-icon" onClick={() => navigate("/")}>🏠</button>
+        <button className="nav-icon active" onClick={() => navigate("/chat")}>💬</button>
+        <button className="nav-icon nav-sos" onClick={() => handleScrollTo(centerRef)}>SOS</button>
+        <button className="nav-icon" onClick={() => handleScrollTo(activityRef)}>📜</button>
+        <button className="nav-icon" onClick={() => navigate("/profile")}>⚙️</button>
       </div>
 
       <div className="dashboard-shortcuts">

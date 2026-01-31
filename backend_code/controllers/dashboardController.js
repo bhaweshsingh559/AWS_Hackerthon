@@ -41,3 +41,39 @@ export async function getDashboardOverview(req, res, next) {
     next(err);
   }
 }
+
+export async function getDashboardActivity(req, res, next) {
+  try {
+    const activity = [
+      {
+        title: "Emergency drill completed",
+        category: "Training",
+        status: "Resolved",
+        occurredAt: "2025-01-20T09:15:00Z",
+      },
+      {
+        title: "Medical alert flagged",
+        category: "Medical",
+        status: "Escalated",
+        occurredAt: "2025-01-18T15:42:00Z",
+      },
+      {
+        title: "Safety check-in sent",
+        category: "Check-in",
+        status: "Delivered",
+        occurredAt: "2025-01-16T06:30:00Z",
+      },
+      {
+        title: "Incident review uploaded",
+        category: "Report",
+        status: "Completed",
+        occurredAt: "2025-01-14T11:05:00Z",
+      },
+    ];
+
+    res.json({ success: true, activity });
+  } catch (err) {
+    logger.error("getDashboardActivity failed", err);
+    next(err);
+  }
+}

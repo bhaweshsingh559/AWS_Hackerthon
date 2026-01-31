@@ -121,6 +121,7 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   color: #eaf0ff;
   display: grid;
   place-items: center;
+  cursor: pointer;
 }
 .dashboard-avatar {
   width: 36px;
@@ -129,6 +130,9 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   background: rgba(46,231,242,0.18);
   display: grid;
   place-items: center;
+  border: none;
+  color: inherit;
+  cursor: pointer;
 }
 .dashboard-pill {
   background: rgba(255,59,59,0.14);
@@ -312,6 +316,10 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
 .dashboard-link {
   font-size: 12px;
   color: #4c7dff;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 .dashboard-hospital-list {
   display: grid;

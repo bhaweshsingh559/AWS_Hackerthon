@@ -54,6 +54,17 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
 - Cancel window (default: 10 seconds)
 - Explicit voice or tap-based cancellation
 
+### 2.2 Dashboard Experience (Web) — **Completed**
+
+**Overview & Analytics — _Completed (Web)_**
+- Dashboard UI with quick access shortcuts
+- Activity cards with downloadable export
+- Context panel showing detection metadata
+
+**Dashboard APIs — _Completed (Web)_**
+- Overview data endpoint (`GET /api/dashboard/overview`)
+- Activity export endpoint (`GET /api/dashboard/activity`)
+
 ---
 
 ## 3. Voice Assistant (Hands-Free Safety) — **In Progress**

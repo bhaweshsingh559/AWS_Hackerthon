@@ -89,4 +89,8 @@ export async function getDashboardOverview() {
   return await safeFetch("/api/dashboard/overview", { method: "GET" });
 }
 
+export async function getDashboardActivity() {
+  return await safeFetch("/api/dashboard/activity", { method: "GET" });
+}
+
 export { API_BASE };
