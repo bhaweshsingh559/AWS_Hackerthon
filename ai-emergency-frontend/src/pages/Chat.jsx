@@ -80,6 +80,10 @@ export default function Chat() {
     };
   }, []);
 
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
   const stats = useMemo(() => {
     return overview?.stats || [
       { label: "Medical", percent: 65 },
@@ -238,7 +242,7 @@ export default function Chat() {
                 loading="lazy"
               />
             ) : (
-              <div className="dashboard-map-placeholder">
+              <button className="dashboard-map-placeholder" type="button" onClick={requestLocation}>
                 <div className="dashboard-map-pin" />
                 <div className="dashboard-map-pin dashboard-map-pin--alt" />
                 <div className="dashboard-map-hint">
@@ -247,7 +251,7 @@ export default function Chat() {
                   {locationStatus === "unsupported" && "Location not supported."}
                   {locationStatus === "idle" && "Tap the pin icon to show your location."}
                 </div>
-              </div>
+              </button>
             )}
           </div>
         </div>

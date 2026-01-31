@@ -396,6 +396,9 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   background: linear-gradient(135deg, rgba(76,125,255,0.2), rgba(155,123,255,0.2));
   position: relative;
   overflow: hidden;
+  border: none;
+  width: 100%;
+  cursor: pointer;
 }
 .dashboard-map-placeholder::after {
   content: "";
