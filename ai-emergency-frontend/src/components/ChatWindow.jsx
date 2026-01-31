@@ -125,6 +125,8 @@ export default function ChatWindow() {
   const [listening, setListening] = useState(false);
   const [lastParsed, setLastParsed] = useState(null);
   const [pendingEmergency, setPendingEmergency] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("idle");
+  const [lastLocation, setLastLocation] = useState(null);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     try {
       return localStorage.getItem("voiceFeedback") !== "off";
@@ -239,8 +241,10 @@ export default function ChatWindow() {
     setLoading(true);
     appendBotMessage("Processing...");
 
-    let location = null;
-    try { location = await getLocation(7000).catch(() => null); } catch { location = null; }
+    let location = lastLocation;
+    if (!location) {
+      location = await requestLocation(7000);
+    }
 
     const payload = { text };
     if (vitals) payload.vitals = vitals;
@@ -304,6 +308,28 @@ export default function ChatWindow() {
     });
   }
 
+  async function requestLocation(timeout = 10000) {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("unsupported");
+      return null;
+    }
+    setLocationStatus("locating");
+    try {
+      const loc = await getLocation(timeout);
+      if (loc) {
+        setLastLocation(loc);
+        setLocationStatus("ready");
+        return loc;
+      }
+      setLocationStatus("unavailable");
+      return null;
+    } catch (err) {
+      console.warn("Location error", err);
+      setLocationStatus("blocked");
+      return null;
+    }
+  }
+
   // contacts helper (ensures user has emergencyContacts)
   async function ensureContactsPresentPrompt() {
     const raw = localStorage.getItem("user");
@@ -360,9 +386,11 @@ export default function ChatWindow() {
 
     setLoading(true);
     try {
-      let location = null;
+      let location = lastLocation;
       try {
-        location = await getLocation(10000);
+        if (!location) {
+          location = await requestLocation(10000);
+        }
         if (location) appendBotMessage("Location acquired — sending SOS with location.");
       } catch (geoErr) {
         console.warn("Geo failed:", geoErr);
@@ -507,9 +535,22 @@ export default function ChatWindow() {
           <button className="btn btn--ghost" onClick={toggleVoiceFeedback}>
             {voiceEnabled ? "Voice: On" : "Voice: Off"}
           </button>
+          <button className="btn btn--ghost" onClick={() => requestLocation(7000)}>
+            {locationStatus === "locating" ? "Locating..." : "Detect location"}
+          </button>
           <button className="btn btn--ghost" onClick={() => window.location.reload()}>Refresh</button>
           <button className="btn btn--danger pulse-alert" onClick={() => triggerSOS()} disabled={loading}>SOS</button>
         </div>
+      </div>
+      <div style={{ marginBottom: 10, fontSize: 12, color: metaColor }}>
+        {locationStatus === "ready" && lastLocation && (
+          <>Location ready • {lastLocation.lat.toFixed(4)}, {lastLocation.lon.toFixed(4)}</>
+        )}
+        {locationStatus === "locating" && <>Detecting location…</>}
+        {locationStatus === "blocked" && <>Location blocked. Enable permissions or use HTTPS.</>}
+        {locationStatus === "unsupported" && <>Location not supported in this browser.</>}
+        {locationStatus === "unavailable" && <>Location unavailable. Try again.</>}
+        {locationStatus === "idle" && <>Location not requested yet.</>}
       </div>
 
       <div ref={areaRef} style={{ flex: 1, overflowY: "auto", padding: 12, borderRadius: 10, background: containerBg, boxShadow: isDark ? "0 6px 18px rgba(0,0,0,0.6)" : "0 6px 18px rgba(2,6,23,0.06)" }}>
@@ -631,16 +672,16 @@ export default function ChatWindow() {
           <div style={{ display: "flex", gap: 6 }}>
             <button
               onClick={() => listening ? handleMicStop() : handleMicStart()}
-              className={`btn btn--ghost`}
+              className={`btn btn--ghost voice-toggle ${listening ? "is-listening" : ""}`}
               title="Start/stop speech"
             >
-              {listening ? "Stop mic" : "Mic"}
+              {listening ? "Listening..." : "Mic"}
             </button>
             <button
               className="btn btn--ghost"
               onClick={async () => {
                 try {
-                  const loc = await getLocation(7000);
+                  const loc = await requestLocation(7000);
                   if (loc) {
                     const link = makeMapsLink(loc);
                     await navigator.clipboard.writeText(link);
