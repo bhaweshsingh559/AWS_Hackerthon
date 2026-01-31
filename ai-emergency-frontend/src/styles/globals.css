@@ -379,7 +379,11 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   padding: 12px;
   border-radius: 14px;
 }
-.dashboard-hospital-name { font-weight: 600; }
+.dashboard-hospital-name {
+  font-weight: 600;
+  color: #eaf0ff;
+  font-size: 14px;
+}
 .dashboard-hospital-meta { font-size: 12px; color: #8aa1c6; }
 .dashboard-call {
   width: 36px;
