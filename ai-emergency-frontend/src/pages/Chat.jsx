@@ -7,6 +7,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -20,20 +21,77 @@ export default function Chat() {
   const requestLocation = () => {
     if (!("geolocation" in navigator)) {
       setLocationStatus("unsupported");
-      return;
+      return Promise.resolve(null);
     }
     setLocationStatus("locating");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCurrentLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy });
-        setLocationStatus("ready");
-      },
-      (err) => {
-        console.warn("dashboard geolocation failed", err);
-        setLocationStatus("blocked");
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
+          setCurrentLocation(coords);
+          setLocationStatus("ready");
+          resolve(coords);
+        },
+        (err) => {
+          console.warn("dashboard geolocation failed", err);
+          setLocationStatus("blocked");
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  };
+
+  const fetchNearbyHospitals = async (coords) => {
+    if (!coords) return [];
+    const radius = 30000;
+    const query = `
+      [out:json];
+      (
+        node["amenity"="hospital"](around:${radius},${coords.lat},${coords.lon});
+        way["amenity"="hospital"](around:${radius},${coords.lat},${coords.lon});
+        relation["amenity"="hospital"](around:${radius},${coords.lat},${coords.lon});
+      );
+      out center tags;
+    `;
+    try {
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      const data = await res.json();
+      const items = (data.elements || []).map((item) => {
+        const lat = item.lat ?? item.center?.lat;
+        const lon = item.lon ?? item.center?.lon;
+        return {
+          name: item.tags?.name || "Nearby Hospital",
+          distanceKm: null,
+          rating: item.tags?.rating || item.tags?.stars || "N/A",
+          phone: item.tags?.phone || item.tags?.["contact:phone"] || "N/A",
+          address: item.tags?.["addr:full"] || item.tags?.["addr:street"] || "",
+          lat,
+          lon,
+          status: "available",
+        };
+      });
+      return items;
+    } catch (err) {
+      console.warn("hospital lookup failed", err);
+      return [];
+    }
+  };
+
+  const calculateDistanceKm = (coords, hospital) => {
+    if (!coords || hospital.lat == null || hospital.lon == null) return null;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(hospital.lat - coords.lat);
+    const dLon = toRad(hospital.lon - coords.lon);
+    const a = Math.sin(dLat / 2) ** 2
+      + Math.cos(toRad(coords.lat)) * Math.cos(toRad(hospital.lat)) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Number((R * c).toFixed(1));
   };
 
   const handleDownload = async () => {
@@ -81,7 +139,26 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    requestLocation();
+    let mounted = true;
+    const loadHospitals = async () => {
+      const coords = await requestLocation();
+      if (!mounted || !coords) return;
+      const nearby = await fetchNearbyHospitals(coords);
+      if (!mounted) return;
+      const withDistance = nearby
+        .map((hospital) => ({
+          ...hospital,
+          distanceKm: hospital.distanceKm ?? calculateDistanceKm(coords, hospital),
+        }))
+        .filter((hospital) => hospital.distanceKm == null || hospital.distanceKm <= 30);
+      setDynamicHospitals(withDistance);
+    };
+    loadHospitals();
+    const interval = setInterval(loadHospitals, 60000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const stats = useMemo(() => {
@@ -105,17 +182,21 @@ export default function Chat() {
   ];
 
   const hospitals = useMemo(() => {
-    const source = overview?.hospitals || defaultHospitals;
+    const source = dynamicHospitals.length > 0
+      ? dynamicHospitals
+      : (overview?.hospitals || defaultHospitals);
     const normalized = source.map((hospital) => ({
       ...hospital,
       rating: hospital.rating ?? 4.6,
       distanceKm: hospital.distanceKm ?? 22.0,
+      phone: hospital.phone || "N/A",
+      address: hospital.address || "",
       status: hospital.status || "available",
     }));
     return normalized
       .filter((hospital) => hospital.distanceKm <= 30)
       .sort((a, b) => b.rating - a.rating || a.distanceKm - b.distanceKm);
-  }, [overview]);
+  }, [dynamicHospitals, overview]);
 
   const hero = overview?.hero || {
     status: "Listening...",
@@ -133,8 +214,8 @@ export default function Chat() {
     ? `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lon}&z=14&output=embed`
     : null;
 
-  const handleHospitalView = (hospitalName) => {
-    const query = encodeURIComponent(`${hospitalName} ${hero.location}`);
+  const handleHospitalView = (hospital) => {
+    const query = encodeURIComponent(`${hospital.name} ${displayLocation}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
   };
 
@@ -244,8 +325,11 @@ export default function Chat() {
                   <div className="dashboard-hospital-meta">
                     {hospital.distanceKm} km • ⭐ {hospital.rating} • {hospital.status}
                   </div>
+                  <div className="dashboard-hospital-meta">
+                    {hospital.phone} {hospital.address ? `• ${hospital.address}` : ""}
+                  </div>
                 </div>
-                <button className="dashboard-call" onClick={() => handleHospitalView(hospital.name)}>📞</button>
+                <button className="dashboard-call" onClick={() => handleHospitalView(hospital)}>📞</button>
               </div>
             ))}
           </div>
