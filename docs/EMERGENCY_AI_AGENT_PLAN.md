@@ -25,9 +25,9 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
 
 ## 2. Core Capabilities (Status)
 
-### 2.1 Emergency Detection (Text + Voice) — **In Progress**
+### 2.1 Emergency Detection (Text + Voice) — **Completed (Web)**
 
-**Input Sources**
+**Input Sources — _Completed (Web)_**
 - Typed text (chat / SOS UI)
 - Voice transcription (ASR)
 - Local keyword spotting (offline fallback)
