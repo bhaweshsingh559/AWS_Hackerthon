@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardActivity, getDashboardOverview, getNearbyHospitals, getWearableSummary } from "../api/http";
+import { getDashboardOverview, getNearbyHospitals } from "../api/http";
 
 export default function Chat() {
   const [overview, setOverview] = useState(null);
@@ -9,15 +9,6 @@ export default function Chat() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
-  const [wearableSummary, setWearableSummary] = useState(null);
-  const [showWearableModal, setShowWearableModal] = useState(false);
-  const [selectedWearable, setSelectedWearable] = useState(() => {
-    try {
-      return localStorage.getItem("wearableProvider") || "";
-    } catch {
-      return "";
-    }
-  });
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -116,32 +107,6 @@ export default function Chat() {
     return Number((R * c).toFixed(1));
   };
 
-  const handleDownload = async () => {
-    try {
-      const resp = await getDashboardActivity();
-      const rows = resp?.activity || [];
-      if (rows.length === 0) return;
-      const header = Object.keys(rows[0]);
-      const csv = [
-        header.join(","),
-        ...rows.map((row) =>
-          header.map((key) => `"${String(row[key] ?? "").replace(/"/g, '""')}"`).join(",")
-        ),
-      ].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "dashboard-activity.csv";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.warn("dashboard activity download failed", err);
-    }
-  };
-
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -160,23 +125,6 @@ export default function Chat() {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    async function loadWearable() {
-      try {
-        const resp = await getWearableSummary();
-        if (mounted) setWearableSummary(resp?.summary || null);
-      } catch (err) {
-        console.warn("wearable summary failed", err);
-      }
-    }
-    loadWearable();
-    const interval = setInterval(loadWearable, 60000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
 
   useEffect(() => {
     if (!pendingCall) return undefined;
@@ -227,59 +175,20 @@ export default function Chat() {
     };
   }, []);
 
-  const stats = useMemo(() => {
-    return overview?.stats || [
-      { label: "Medical", percent: 65 },
-      { label: "Special Equipment", percent: 45 },
-      { label: "Traffic Signals", percent: 14 },
-      { label: "CPR Recorded", percent: 12 },
-      { label: "Alarm", percent: 9 },
-      { label: "Facts", percent: 13 },
-      { label: "Reviews", percent: 67 },
-      { label: "Cartoons", percent: 35 },
-    ];
-  }, [overview]);
-
-  const wearableProvidersConfig = [
-    {
-      id: "apple",
-      name: "Apple Watch",
-      link: "https://www.apple.com/ios/health/",
-      note: "Sign in with Apple Fitness to sync Health data.",
-    },
-    {
-      id: "noise",
-      name: "Noise Watch",
-      link: "https://www.gonoise.com/pages/noise-health",
-      note: "Open Noise Health app to authorize sync.",
-    },
-    {
-      id: "boat",
-      name: "boAt Watch",
-      link: "https://www.boat-lifestyle.com/pages/boat-crest",
-      note: "Use boAt Crest app to connect.",
-    },
+  const safetyFeatures = [
+    "Fire Safety",
+    "Tsunami Safety",
+    "Health Emergency",
+    "Accidental Safety",
+    "Girls Safety",
+    "Old Age Safety",
+    "Bomb Threat Safety",
+    "Area Crime Alerts",
+    "Travel Safety Alerts",
+    "Flood Warning",
+    "Earthquake Safety",
+    "Cyclone Alerts",
   ];
-
-  const wearableMetrics = wearableSummary?.metrics || [];
-  const wearableProvider = wearableSummary?.provider || (selectedWearable ? `${selectedWearable} (connecting)` : "Not connected");
-  const wearableProviders = wearableSummary?.supportedProviders || wearableProvidersConfig.map((provider) => provider.name);
-  const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
-
-  const handleConnectWearable = () => {
-    setShowWearableModal(true);
-  };
-
-  const handleSelectWearable = (provider) => {
-    try {
-      localStorage.setItem("wearableProvider", provider.name);
-    } catch {
-      // ignore storage failures
-    }
-    setSelectedWearable(provider.name);
-    setShowWearableModal(false);
-    window.open(provider.link, "_blank", "noopener,noreferrer");
-  };
 
   const defaultHospitals = [
     { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
@@ -426,65 +335,13 @@ export default function Chat() {
 
       <div className="dashboard-main">
         <div className="dashboard-panel dashboard-left" ref={activityRef}>
-          <div className="dashboard-panel-title">Previous Activity</div>
-          <div className="dashboard-stats-grid">
-            {stats.map((stat) => (
-              <div key={stat.label} className="dashboard-card">
-                <div className="dashboard-card-label">{stat.label.toUpperCase()}</div>
-                <div className="dashboard-card-value">{stat.percent}%</div>
-                <div className="dashboard-bar">
-                  <span style={{ width: `${stat.percent}%` }} />
-                </div>
-              </div>
+          <div className="dashboard-panel-title">Safety Programs</div>
+          <div className="dashboard-safety-list">
+            {safetyFeatures.map((feature) => (
+              <button key={feature} type="button" className="dashboard-safety-item">
+                {feature}
+              </button>
             ))}
-          </div>
-          <button
-            className="dashboard-download"
-            aria-label="Download activity"
-            onClick={handleDownload}
-          >
-            ⬇️
-          </button>
-
-          <div className="dashboard-panel-title" style={{ marginTop: 20 }}>Wearable Snapshot</div>
-          <div className="dashboard-wearable-card">
-            <div className="dashboard-wearable-header">
-              <span>{wearableProvider}</span>
-              <span className="dashboard-wearable-pill">Live</span>
-            </div>
-            <div className="dashboard-wearable-grid">
-              {wearableMetrics.map((metric) => (
-                <div key={metric.label} className="dashboard-wearable-item">
-                  <div className="dashboard-wearable-label">{metric.label}</div>
-                  <div className="dashboard-wearable-value">{metric.value} {metric.unit}</div>
-                  <div className="dashboard-wearable-meta">{metric.trend}</div>
-                </div>
-              ))}
-            </div>
-            <div className="dashboard-wearable-meta">
-              {hasWearableConnection ? "Connected device" : "Connect your wearable"}
-            </div>
-            {!hasWearableConnection && (
-              <div className="dashboard-wearable-actions">
-                <button
-                  className="dashboard-wearable-action"
-                  type="button"
-                  onClick={handleConnectWearable}
-                >
-                  Add wearable
-                </button>
-                {wearableProviders.map((provider) => (
-                  <button
-                    key={provider}
-                    className="dashboard-wearable-action"
-                    type="button"
-                    onClick={handleConnectWearable}
-                  >
-                    Connect {provider}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
@@ -576,32 +433,6 @@ export default function Chat() {
             </div>
           )}
 
-          {showWearableModal && (
-            <div className="dashboard-callout-overlay" role="dialog" aria-modal="true">
-              <div className="dashboard-wearable-modal">
-                <div className="dashboard-callout-title">Connect a wearable</div>
-                <div className="dashboard-callout-meta">
-                  Choose your device to continue to its fitness portal or app.
-                </div>
-                <div className="dashboard-wearable-modal-grid">
-                  {wearableProvidersConfig.map((provider) => (
-                    <button
-                      key={provider.id}
-                      className="dashboard-wearable-provider"
-                      type="button"
-                      onClick={() => handleSelectWearable(provider)}
-                    >
-                      <div className="dashboard-wearable-provider-name">{provider.name}</div>
-                      <div className="dashboard-wearable-provider-note">{provider.note}</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="dashboard-callout-actions">
-                  <button className="dashboard-link" onClick={() => setShowWearableModal(false)}>Close</button>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="dashboard-map-card">
             {mapUrl ? (

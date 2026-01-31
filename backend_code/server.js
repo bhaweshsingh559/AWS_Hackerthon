@@ -10,7 +10,6 @@ import userRoutes from "./routes/userRoutes.js";
 import emergencyRoutes from "./routes/emergencyRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import placesRoutes from "./routes/placesRoutes.js";
-import wearablesRoutes from "./routes/wearablesRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 const logger = pino({ level: process.env.LOG_LEVEL || "info" });
@@ -28,7 +27,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/emergency", emergencyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/places", placesRoutes);
-app.use("/api/wearables", wearablesRoutes);
 
 app.use(errorHandler);
 

@@ -106,8 +106,4 @@ export async function getNearbyHospitals(lat, lon, radius = 30000) {
   return await safeFetch(`/api/places/nearby?${params.toString()}`, { method: "GET" });
 }
 
-export async function getWearableSummary() {
-  return await safeFetch("/api/wearables/summary", { method: "GET" });
-}
-
 export { API_BASE };

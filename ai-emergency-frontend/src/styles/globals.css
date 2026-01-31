@@ -410,107 +410,34 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   border: 1px solid rgba(35,49,79,0.7);
   padding: 12px;
 }
-.dashboard-wearable-card {
+.dashboard-safety-list {
   margin-top: 12px;
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(18,26,42,0.9);
-  border: 1px solid rgba(35,49,79,0.7);
-}
-.dashboard-wearable-header {
-  display: flex;
-  justify-content: space-between;
-  color: #eaf0ff;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.dashboard-wearable-pill {
-  background: rgba(46,231,242,0.12);
-  color: #2ee7f2;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-}
-.dashboard-wearable-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
-.dashboard-wearable-item {
+.dashboard-safety-list::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard-safety-list::-webkit-scrollbar-thumb {
+  background: rgba(76,125,255,0.4);
+  border-radius: 999px;
+}
+.dashboard-safety-item {
   background: rgba(24,35,58,0.6);
   border: 1px solid rgba(35,49,79,0.7);
   border-radius: 12px;
-  padding: 10px;
-}
-.dashboard-wearable-label {
-  font-size: 11px;
-  color: #8aa1c6;
-  text-transform: uppercase;
-}
-.dashboard-wearable-value {
-  font-weight: 600;
+  padding: 10px 12px;
   color: #eaf0ff;
-  margin-top: 4px;
-}
-.dashboard-wearable-meta {
-  font-size: 11px;
-  color: #8aa1c6;
-  margin-top: 6px;
-}
-.dashboard-wearable-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-.dashboard-wearable-action {
-  background: rgba(18,26,42,0.9);
-  border: 1px solid rgba(46,231,242,0.5);
-  color: #2ee7f2;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 11px;
+  text-align: left;
+  font-size: 13px;
   cursor: pointer;
 }
-.dashboard-wearable-action:hover {
-  background: rgba(46,231,242,0.15);
-}
-.dashboard-wearable-modal {
-  background: rgba(18,26,42,0.96);
-  border: 1px solid rgba(46,231,242,0.3);
-  border-radius: 16px;
-  padding: 20px;
-  max-width: 520px;
-  width: 90%;
-  text-align: left;
-}
-.dashboard-wearable-modal-grid {
-  display: grid;
-  gap: 10px;
-  margin: 16px 0;
-}
-.dashboard-wearable-provider {
-  display: block;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(35,49,79,0.7);
-  background: rgba(24,35,58,0.7);
-  text-decoration: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-.dashboard-wearable-provider:hover {
-  border-color: rgba(46,231,242,0.5);
-}
-.dashboard-wearable-provider-name {
-  color: #eaf0ff;
-  font-weight: 600;
-}
-.dashboard-wearable-provider-note {
-  color: #8aa1c6;
-  font-size: 12px;
-  margin-top: 4px;
+.dashboard-safety-item:hover {
+  border-color: rgba(76,125,255,0.6);
+  color: #4c7dff;
 }
 .dashboard-callout {
   margin-top: 12px;
