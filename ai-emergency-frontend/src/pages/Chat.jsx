@@ -472,12 +472,13 @@ export default function Chat() {
         </div>
 
         <div className="dashboard-center" ref={centerRef}>
-          <div className="orb-shell">
+          <div className={`orb-shell ${isListening ? "is-listening" : ""}`}>
             <div className="orb-outer" />
             <div className="orb-core">
               <div className="orb-wave" />
               <div className="orb-wave orb-wave--alt" />
               <div className="orb-particles" />
+              <div className="orb-wave-line" />
               <div className={`orb-audio-wave ${isListening ? "is-active" : ""}`}>
                 <span />
                 <span />
