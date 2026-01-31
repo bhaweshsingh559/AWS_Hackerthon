@@ -184,6 +184,8 @@ export default function ChatWindow() {
     r.lang = "en-US";
     r.interimResults = false;
     r.maxAlternatives = 1;
+    r.continuous = false;
+    r.onstart = () => setListening(true);
     r.onresult = (ev) => {
       const t = ev.results?.[0]?.[0]?.transcript;
       if (t) {
@@ -206,6 +208,10 @@ export default function ChatWindow() {
     r.onend = () => setListening(false);
     recognitionRef.current = r;
     return () => { try { r.stop(); } catch {} };
+  }, []);
+
+  useEffect(() => {
+    requestLocation(7000);
   }, []);
 
   useEffect(() => {
@@ -436,8 +442,12 @@ export default function ChatWindow() {
       alert("Speech recognition not available in this browser.");
       return;
     }
-    setListening(true);
-    try { r.start(); } catch (e) { console.warn("Failed to start recognition", e); setListening(false); }
+    try {
+      r.start();
+    } catch (e) {
+      console.warn("Failed to start recognition", e);
+      setListening(false);
+    }
   }
   function handleMicStop() {
     const r = recognitionRef.current;
@@ -526,6 +536,9 @@ export default function ChatWindow() {
   const userBubbleBg = isDark ? "linear-gradient(90deg,#0f3a2f,#0b6b53)" : "linear-gradient(90deg,#e6fff2,#d1f7e0)";
   const textColor = isDark ? "#e6eef6" : "#0f172a";
   const metaColor = isDark ? "rgba(255,255,255,0.65)" : "rgba(15,23,42,0.65)";
+  const mapUrl = lastLocation
+    ? `https://www.google.com/maps?q=${lastLocation.lat},${lastLocation.lon}&z=15&output=embed`
+    : null;
 
   return (
     <div className="emergency-chat" style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", height: "78vh" }}>
@@ -640,6 +653,32 @@ export default function ChatWindow() {
             <a className="btn btn--ghost" href={assistanceLinks.police} target="_blank" rel="noreferrer">
               Nearest Police
             </a>
+          </div>
+        </div>
+      )}
+
+      {lastLocation && (
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          borderRadius: 10,
+          background: isDark ? "#0b1220" : "#f8fafc",
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0"}`,
+          color: textColor,
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Current location</div>
+          <div style={{ fontSize: 12, color: metaColor, marginBottom: 10 }}>
+            {lastLocation.lat.toFixed(4)}, {lastLocation.lon.toFixed(4)} • accuracy {Math.round(lastLocation.accuracy)}m
+          </div>
+          <div className="location-map">
+            <iframe
+              title="Current location map"
+              src={mapUrl}
+              width="100%"
+              height="220"
+              style={{ border: 0, borderRadius: 12 }}
+              loading="lazy"
+            />
           </div>
         </div>
       )}
