@@ -317,7 +317,7 @@ export default function Chat() {
               View all
             </button>
           </div>
-          <div className="dashboard-hospital-list">
+          <div className="dashboard-hospital-list dashboard-hospital-scroll">
             {hospitals.map((hospital) => (
               <div key={hospital.name} className="dashboard-hospital-card">
                 <div>
