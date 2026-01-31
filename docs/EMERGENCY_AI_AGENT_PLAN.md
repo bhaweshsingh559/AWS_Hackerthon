@@ -40,14 +40,15 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
   - “Someone is unconscious”
   - “Call police / ambulance”
 
-**Incident Classification — _In Progress_**
-- Performed server-side using AWS Bedrock / Amazon Lex
+**Incident Classification — _Completed (Server)_**
+- Performed server-side using AWS Bedrock / Amazon Lex with keyword fallback
 - Categories:
   - medical
   - accident
   - fire
   - crime
   - unknown
+- Endpoint: `POST /api/emergency/classify`
 
 **False-Positive Protection — _Completed (Web)_**
 - Audible confirmation via TTS

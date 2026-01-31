@@ -116,6 +116,89 @@ export async function detectEmergencyText(req, res, next) {
   }
 }
 
+const INCIDENT_CATEGORIES = ["medical", "accident", "fire", "crime", "unknown"];
+
+function normalizeIncidentCategory(value) {
+  if (!value) return "unknown";
+  const normalized = String(value).toLowerCase().trim();
+  if (INCIDENT_CATEGORIES.includes(normalized)) return normalized;
+  if (["injury", "health", "illness", "cardiac"].includes(normalized)) return "medical";
+  if (["crash", "collision", "traffic", "vehicle"].includes(normalized)) return "accident";
+  if (["assault", "robbery", "theft", "violence"].includes(normalized)) return "crime";
+  if (["burn", "smoke", "flames"].includes(normalized)) return "fire";
+  return "unknown";
+}
+
+function fallbackIncidentClassification(text = "") {
+  const lowered = text.toLowerCase();
+  const matches = {
+    medical: ["breathing", "chest pain", "heart", "stroke", "unconscious", "blood", "injury", "overdose"],
+    accident: ["accident", "crash", "collision", "hit", "vehicle", "bike", "bus", "traffic"],
+    fire: ["fire", "smoke", "burning", "flames", "explosion", "gas leak"],
+    crime: ["assault", "robbery", "theft", "gun", "knife", "violence", "attack"],
+  };
+
+  for (const [category, keywords] of Object.entries(matches)) {
+    if (keywords.some((keyword) => lowered.includes(keyword))) {
+      return {
+        category,
+        confidence: 0.62,
+        reasoning: `Matched ${category} keyword(s) in the report.`,
+        source: "keyword-fallback",
+      };
+    }
+  }
+
+  return {
+    category: "unknown",
+    confidence: 0.35,
+    reasoning: "No classification keywords matched.",
+    source: "keyword-fallback",
+  };
+}
+
+function buildIncidentClassificationPrompt(text, context) {
+  const contextText = context ? `Context: ${JSON.stringify(context)}.` : "";
+  return [
+    "Classify the incident into one category: medical, accident, fire, crime, unknown.",
+    "Respond ONLY with JSON:",
+    '{"category":"medical|accident|fire|crime|unknown","confidence":0.0,"reasoning":"short explanation"}',
+    `User report: """${text}"""`,
+    contextText,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export async function classifyIncident(req, res, next) {
+  try {
+    const { text, context } = req.body || {};
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({ success: false, error: "text is required" });
+    }
+
+    const prompt = buildIncidentClassificationPrompt(text, context);
+    const result = await callBedrock(prompt);
+    const parsed = result.parsed || result.fallback || {};
+    const normalizedCategory = normalizeIncidentCategory(parsed.category);
+    const fallback = fallbackIncidentClassification(text);
+    const category = normalizedCategory !== "unknown" ? normalizedCategory : fallback.category;
+
+    return res.json({
+      success: true,
+      category,
+      confidence: typeof parsed.confidence === "number" ? parsed.confidence : fallback.confidence,
+      reasoning: parsed.reasoning || fallback.reasoning,
+      source: normalizedCategory !== "unknown" ? "bedrock" : fallback.source,
+      usedModel: result.usedModel || null,
+      raw: result.raw || null,
+    });
+  } catch (err) {
+    logger.error("classifyIncident error", err);
+    next(err);
+  }
+}
+
 function buildAnalyzePrompt(text, vitals) {
   const vitalsText = vitals ? ` Vitals: ${JSON.stringify(vitals)}.` : "";
   return `...PROMPT... User report: """${text}"""${vitalsText}`; // same strict JSON prompt as earlier
