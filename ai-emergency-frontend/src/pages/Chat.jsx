@@ -240,26 +240,6 @@ export default function Chat() {
     ];
   }, [overview]);
 
-  const wearableMetrics = wearableSummary?.metrics || [];
-  const wearableProvider = wearableSummary?.provider || (selectedWearable ? `${selectedWearable} (connecting)` : "Not connected");
-  const wearableProviders = wearableSummary?.supportedProviders || [];
-  const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
-
-  const handleConnectWearable = () => {
-    setShowWearableModal(true);
-  };
-
-  const handleSelectWearable = (provider) => {
-    try {
-      localStorage.setItem("wearableProvider", provider.name);
-    } catch {
-      // ignore storage failures
-    }
-    setSelectedWearable(provider.name);
-    setShowWearableModal(false);
-    window.open(provider.link, "_blank", "noopener,noreferrer");
-  };
-
   const wearableProvidersConfig = [
     {
       id: "apple",
@@ -280,6 +260,26 @@ export default function Chat() {
       note: "Use boAt Crest app to connect.",
     },
   ];
+
+  const wearableMetrics = wearableSummary?.metrics || [];
+  const wearableProvider = wearableSummary?.provider || (selectedWearable ? `${selectedWearable} (connecting)` : "Not connected");
+  const wearableProviders = wearableSummary?.supportedProviders || wearableProvidersConfig.map((provider) => provider.name);
+  const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
+
+  const handleConnectWearable = () => {
+    setShowWearableModal(true);
+  };
+
+  const handleSelectWearable = (provider) => {
+    try {
+      localStorage.setItem("wearableProvider", provider.name);
+    } catch {
+      // ignore storage failures
+    }
+    setSelectedWearable(provider.name);
+    setShowWearableModal(false);
+    window.open(provider.link, "_blank", "noopener,noreferrer");
+  };
 
   const defaultHospitals = [
     { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
@@ -461,12 +461,10 @@ export default function Chat() {
                 </div>
               ))}
             </div>
-            {wearableProviders.length > 0 && (
-              <div className="dashboard-wearable-meta">
-                {hasWearableConnection ? "Connected device" : "Connect your wearable"}
-              </div>
-            )}
-            {!hasWearableConnection && wearableProviders.length > 0 && (
+            <div className="dashboard-wearable-meta">
+              {hasWearableConnection ? "Connected device" : "Connect your wearable"}
+            </div>
+            {!hasWearableConnection && (
               <div className="dashboard-wearable-actions">
                 <button
                   className="dashboard-wearable-action"
