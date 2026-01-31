@@ -478,6 +478,14 @@ export default function Chat() {
               <div className="orb-wave" />
               <div className="orb-wave orb-wave--alt" />
               <div className="orb-particles" />
+              <div className={`orb-audio-wave ${isListening ? "is-active" : ""}`}>
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
           </div>
           <div className="orb-status">{hero.status}</div>
