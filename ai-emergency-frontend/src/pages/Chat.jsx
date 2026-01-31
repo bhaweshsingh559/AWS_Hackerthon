@@ -222,7 +222,12 @@ export default function Chat() {
     }));
     return normalized
       .filter((hospital) => hospital.distanceKm <= 30)
-      .sort((a, b) => b.rating - a.rating || a.distanceKm - b.distanceKm);
+      .sort((a, b) => {
+        const aHasPhone = a.phone && a.phone !== "N/A";
+        const bHasPhone = b.phone && b.phone !== "N/A";
+        if (aHasPhone !== bHasPhone) return aHasPhone ? -1 : 1;
+        return b.rating - a.rating || a.distanceKm - b.distanceKm;
+      });
   }, [dynamicHospitals, overview]);
 
   const hero = overview?.hero || {
