@@ -9,10 +9,17 @@ export default function Chat() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
+  const [pendingEmergency, setPendingEmergency] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [speechSupported, setSpeechSupported] = useState(true);
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
   const contextRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const transcriptRef = useRef("");
 
   const handleScrollTo = (ref) => {
     if (!ref.current) return;
@@ -125,6 +132,74 @@ export default function Chat() {
     };
   }, []);
 
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+      return undefined;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (event) => {
+      console.warn("speech recognition error", event);
+      setIsListening(false);
+    };
+    recognition.onresult = (event) => {
+      let interim = "";
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const text = result[0]?.transcript || "";
+        if (result.isFinal) {
+          finalTranscript += ` ${text}`;
+        } else {
+          interim += ` ${text}`;
+        }
+      }
+      if (finalTranscript.trim()) {
+        setTranscript((prev) => {
+          const updated = `${prev} ${finalTranscript}`.trim();
+          transcriptRef.current = updated;
+          return updated;
+        });
+      }
+      setInterimTranscript(interim.trim());
+
+      const combined = `${transcriptRef.current} ${finalTranscript} ${interim}`.toLowerCase();
+      const emergencyKeywords = [
+        "help me",
+        "i am in trouble",
+        "emergency",
+        "heart attack",
+        "call ambulance",
+        "need help",
+        "help",
+        "save me",
+        "fire",
+        "attack",
+        "danger",
+        "accident",
+        "bleeding",
+        "panic",
+        "faint",
+      ];
+      if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
+        setPendingEmergency({
+          remaining: 10,
+          phrase: combined.trim(),
+        });
+        recognition.stop();
+      }
+    };
+    recognitionRef.current = recognition;
+    return () => {
+      recognition.stop();
+    };
+  }, [pendingEmergency]);
 
   useEffect(() => {
     if (!pendingCall) return undefined;
@@ -140,6 +215,21 @@ export default function Chat() {
     }, 1000);
     return () => clearTimeout(timer);
   }, [pendingCall]);
+
+  useEffect(() => {
+    if (!pendingEmergency) return undefined;
+    if (pendingEmergency.remaining <= 0) {
+      handleEmergencyAlert(pendingEmergency);
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      setPendingEmergency((prev) => {
+        if (!prev) return prev;
+        return { ...prev, remaining: prev.remaining - 1 };
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [pendingEmergency]);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -304,6 +394,42 @@ export default function Chat() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const handleEmergencyAlert = (pending) => {
+    if (!pending) return;
+    const locationLink = currentLocation
+      ? `https://www.google.com/maps/search/?api=1&query=${currentLocation.lat},${currentLocation.lon}`
+      : "Location unavailable";
+    const name = user?.name || "User";
+    const contact = emergencyContact;
+    const message = `Emergency detected for ${name}. Heard: "${pending.phrase}". Location: ${locationLink}`;
+    if (contact && contact !== "N/A") {
+      const digits = contact.replace(/[^+\d]/g, "");
+      const url = digits
+        ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      window.alert(message);
+    }
+    setPendingEmergency(null);
+  };
+
+  const handleCancelEmergency = () => {
+    setPendingEmergency(null);
+  };
+
+  const handleMicToggle = () => {
+    if (!speechSupported || !recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      setTranscript("");
+      setInterimTranscript("");
+      transcriptRef.current = "";
+      recognitionRef.current.start();
+    }
+  };
+
   return (
     <div className="dashboard-shell">
       <div className="dashboard-topbar">
@@ -355,7 +481,26 @@ export default function Chat() {
             </div>
           </div>
           <div className="orb-status">{hero.status}</div>
-          <button className="dashboard-mic">🎙️</button>
+          <button className={`dashboard-mic ${isListening ? "dashboard-mic--active" : ""}`} onClick={handleMicToggle}>
+            🎙️
+          </button>
+          <div className="dashboard-voice-panel">
+            <div className="dashboard-voice-status">
+              <span className={`dashboard-voice-dot ${isListening ? "is-active" : ""}`} />
+              {speechSupported ? (isListening ? "Listening for emergency keywords…" : "Tap mic to start listening.") : "Speech recognition not supported."}
+            </div>
+            <div className={`dashboard-voice-wave ${isListening ? "is-active" : ""}`}>
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="dashboard-voice-transcript">
+              <span className="dashboard-voice-final">{transcript}</span>
+              {interimTranscript && <span className="dashboard-voice-interim"> {interimTranscript}</span>}
+            </div>
+          </div>
           {loading && <div className="dashboard-hint">Syncing emergency context…</div>}
         </div>
 
@@ -428,6 +573,20 @@ export default function Chat() {
                 <div className="dashboard-callout-actions">
                   <button className="dashboard-link" onClick={() => handleSendWhatsApp(pendingCall)}>Send WhatsApp (1)</button>
                   <button className="dashboard-link" onClick={handleCancelCall}>Cancel call</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {pendingEmergency && (
+            <div className="dashboard-callout-overlay">
+              <div className="dashboard-callout-emergency">
+                <div className="dashboard-callout-title">Emergency alert in {pendingEmergency.remaining}s</div>
+                <div className="dashboard-callout-meta">
+                  Sending alert to emergency contact unless canceled.
+                </div>
+                <div className="dashboard-callout-actions">
+                  <button className="dashboard-link" onClick={handleCancelEmergency}>Cancel alert</button>
                 </div>
               </div>
             </div>

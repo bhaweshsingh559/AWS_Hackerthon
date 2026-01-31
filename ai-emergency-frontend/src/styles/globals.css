@@ -284,6 +284,72 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   color: #2ee7f2;
   box-shadow: 0 0 18px rgba(46,231,242,0.4);
 }
+.dashboard-mic--active {
+  box-shadow: 0 0 22px rgba(76,125,255,0.65);
+  border-color: rgba(76,125,255,0.8);
+}
+.dashboard-voice-panel {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+  width: min(340px, 90%);
+  text-align: center;
+  color: #8aa1c6;
+  font-size: 12px;
+}
+.dashboard-voice-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.dashboard-voice-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(138,161,198,0.6);
+}
+.dashboard-voice-dot.is-active {
+  background: #2ee7f2;
+  box-shadow: 0 0 10px rgba(46,231,242,0.7);
+}
+.dashboard-voice-wave {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  height: 20px;
+}
+.dashboard-voice-wave span {
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(76,125,255,0.35);
+  height: 6px;
+  align-self: flex-end;
+  transition: height 0.3s ease;
+}
+.dashboard-voice-wave.is-active span {
+  background: rgba(46,231,242,0.8);
+  animation: voiceBars 1s ease-in-out infinite;
+}
+.dashboard-voice-wave.is-active span:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-voice-wave.is-active span:nth-child(3) { animation-delay: 0.2s; }
+.dashboard-voice-wave.is-active span:nth-child(4) { animation-delay: 0.3s; }
+.dashboard-voice-wave.is-active span:nth-child(5) { animation-delay: 0.4s; }
+.dashboard-voice-transcript {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(12,18,38,0.6);
+  border: 1px solid rgba(35,49,79,0.6);
+  color: #eaf0ff;
+  font-size: 13px;
+}
+.dashboard-voice-final {
+  color: #eaf0ff;
+}
+.dashboard-voice-interim {
+  color: rgba(138,161,198,0.9);
+}
 .dashboard-hint {
   font-size: 12px;
   color: #8aa1c6;
@@ -337,6 +403,12 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   border-radius: 999px;
   border: 1px solid rgba(46,231,242,0.6);
   animation: voicePulse 1.6s ease-out infinite;
+}
+
+@keyframes voiceBars {
+  0% { height: 6px; }
+  50% { height: 18px; }
+  100% { height: 8px; }
 }
 
 @keyframes voicePulse {
