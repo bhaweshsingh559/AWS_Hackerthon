@@ -254,11 +254,12 @@ export default function Chat() {
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
   };
 
-  const speakAnnouncement = (hospital) => {
+  const speakAnnouncement = (hospital, locationText) => {
     if (!("speechSynthesis" in window)) return;
     const name = user?.name || "the user";
     const phone = emergencyContact === "N/A" ? "no emergency contact available" : emergencyContact;
-    const text = `This is Rakshak. ${name} needs urgent help. Emergency contact ${phone}. If you can assist, press one to send the user's location on WhatsApp.`;
+    const locationLine = locationText ? `The user is located at ${locationText}.` : "";
+    const text = `Hey, I am ${name}. Rakshak AI voice assistance. This user is in trouble, please help. Emergency contact ${phone}. ${locationLine}`;
     try {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
@@ -270,7 +271,7 @@ export default function Chat() {
   };
 
   const handleCallHospital = (hospital) => {
-    const fallbackPhone = "108";
+    const fallbackPhone = "6388430012";
     const phone = hospital?.phone && hospital.phone !== "N/A" ? hospital.phone : fallbackPhone;
     setPendingCall({
       hospital: {
@@ -279,7 +280,7 @@ export default function Chat() {
       },
       remaining: 10,
     });
-    speakAnnouncement(hospital);
+    speakAnnouncement(hospital, displayLocation);
   };
 
   const handleConfirmCall = (pending) => {
@@ -423,16 +424,16 @@ export default function Chat() {
           </div>
 
           {pendingCall && (
-            <div className="dashboard-callout">
-              <div>
-                <div className="dashboard-callout-title">Calling {pendingCall.hospital.name}</div>
+            <div className="dashboard-callout-overlay">
+              <div className="dashboard-callout-emergency">
+                <div className="dashboard-callout-title">Emergency call in {pendingCall.remaining}s</div>
                 <div className="dashboard-callout-meta">
-                  Auto-dialing in {pendingCall.remaining}s. Press 1 to send WhatsApp location.
+                  Calling {pendingCall.hospital.name} • Press 1 to send WhatsApp location.
                 </div>
-              </div>
-              <div className="dashboard-callout-actions">
-                <button className="dashboard-link" onClick={() => handleSendWhatsApp(pendingCall)}>Send WhatsApp (1)</button>
-                <button className="dashboard-link" onClick={handleCancelCall}>Cancel</button>
+                <div className="dashboard-callout-actions">
+                  <button className="dashboard-link" onClick={() => handleSendWhatsApp(pendingCall)}>Send WhatsApp (1)</button>
+                  <button className="dashboard-link" onClick={handleCancelCall}>Cancel call</button>
+                </div>
               </div>
             </div>
           )}

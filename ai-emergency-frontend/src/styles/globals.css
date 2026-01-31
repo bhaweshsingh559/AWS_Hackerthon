@@ -407,6 +407,35 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   gap: 12px;
   align-items: center;
 }
+.dashboard-callout-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,12,20,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.dashboard-callout-emergency {
+  background: rgba(75, 8, 12, 0.92);
+  border: 1px solid rgba(255, 59, 59, 0.65);
+  border-radius: 16px;
+  padding: 20px;
+  min-width: 320px;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(255, 59, 59, 0.25);
+}
+.dashboard-callout-emergency .dashboard-callout-title {
+  color: #ffe5e5;
+  margin-bottom: 6px;
+}
+.dashboard-callout-emergency .dashboard-callout-meta {
+  color: rgba(255, 255, 255, 0.75);
+}
+.dashboard-callout-emergency .dashboard-callout-actions {
+  justify-content: center;
+}
 .dashboard-callout-title {
   font-weight: 700;
   color: #eaf0ff;
