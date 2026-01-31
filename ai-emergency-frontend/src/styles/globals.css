@@ -457,6 +457,24 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   color: #8aa1c6;
   margin-top: 6px;
 }
+.dashboard-wearable-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.dashboard-wearable-action {
+  background: rgba(18,26,42,0.9);
+  border: 1px solid rgba(46,231,242,0.5);
+  color: #2ee7f2;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.dashboard-wearable-action:hover {
+  background: rgba(46,231,242,0.15);
+}
 .dashboard-callout {
   margin-top: 12px;
   padding: 12px;

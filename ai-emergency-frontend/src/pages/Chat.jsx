@@ -235,6 +235,11 @@ export default function Chat() {
   const wearableMetrics = wearableSummary?.metrics || [];
   const wearableProvider = wearableSummary?.provider || "Not connected";
   const wearableProviders = wearableSummary?.supportedProviders || [];
+  const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
+
+  const handleConnectWearable = (provider) => {
+    alert(`Connecting ${provider} is coming soon. We'll guide you through OAuth pairing once available.`);
+  };
 
   const defaultHospitals = [
     { name: "City Hospital", distanceKm: 12.4, rating: 4.8, status: "available" },
@@ -418,7 +423,21 @@ export default function Chat() {
             </div>
             {wearableProviders.length > 0 && (
               <div className="dashboard-wearable-meta">
-                Connect: {wearableProviders.join(", ")}
+                {hasWearableConnection ? "Connected device" : "Connect your wearable"}
+              </div>
+            )}
+            {!hasWearableConnection && wearableProviders.length > 0 && (
+              <div className="dashboard-wearable-actions">
+                {wearableProviders.map((provider) => (
+                  <button
+                    key={provider}
+                    className="dashboard-wearable-action"
+                    type="button"
+                    onClick={() => handleConnectWearable(provider)}
+                  >
+                    Connect {provider}
+                  </button>
+                ))}
               </div>
             )}
           </div>
