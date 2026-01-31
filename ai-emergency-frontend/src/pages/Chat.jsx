@@ -430,8 +430,10 @@ export default function Chat() {
     }
   };
 
+  const isEmergencyMode = Boolean(pendingEmergency);
+
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell ${isEmergencyMode ? "dashboard-shell--emergency" : ""}`}>
       <div className="dashboard-topbar">
         <div className="dashboard-brand">
           <div className="dashboard-brand-logo">
@@ -472,8 +474,15 @@ export default function Chat() {
         </div>
 
         <div className="dashboard-center" ref={centerRef}>
-          <div className={`orb-shell ${isListening ? "is-listening" : ""}`}>
+          <div
+            className={[
+              "orb-shell",
+              isListening ? "is-listening" : "",
+              isEmergencyMode ? "is-emergency" : "",
+            ].filter(Boolean).join(" ")}
+          >
             <div className="orb-outer" />
+            <div className={`orb-countdown-ring ${isEmergencyMode ? "is-active" : ""}`} />
             <div className="orb-core">
               <div className="orb-wave" />
               <div className="orb-wave orb-wave--alt" />
@@ -489,10 +498,15 @@ export default function Chat() {
               </div>
             </div>
           </div>
-          <div className="orb-status">{hero.status}</div>
+          <div className="orb-status">{isListening ? "Listening..." : hero.status}</div>
           <button className={`dashboard-mic ${isListening ? "dashboard-mic--active" : ""}`} onClick={handleMicToggle}>
             🎙️
           </button>
+          {isEmergencyMode && (
+            <button className="dashboard-emergency-cancel" onClick={handleCancelEmergency}>
+              CANCEL
+            </button>
+          )}
           <div className="dashboard-voice-panel">
             <div className="dashboard-voice-status">
               <span className={`dashboard-voice-dot ${isListening ? "is-active" : ""}`} />
