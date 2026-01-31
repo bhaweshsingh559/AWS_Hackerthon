@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardActivity, getDashboardOverview } from "../api/http";
+import { getDashboardActivity, getDashboardOverview, getNearbyHospitals } from "../api/http";
 
 export default function Chat() {
   const [overview, setOverview] = useState(null);
@@ -46,6 +46,19 @@ export default function Chat() {
   const fetchNearbyHospitals = async (coords) => {
     if (!coords) return [];
     const radius = 30000;
+    try {
+      const resp = await getNearbyHospitals(coords.lat, coords.lon, radius);
+      if (resp?.hospitals?.length) {
+        return resp.hospitals.map((hospital) => ({
+          ...hospital,
+          distanceKm: null,
+          rating: hospital.rating ?? "N/A",
+        }));
+      }
+    } catch (err) {
+      console.warn("google hospitals lookup failed, falling back", err);
+    }
+
     const query = `
       [out:json];
       (
@@ -62,7 +75,7 @@ export default function Chat() {
         body: `data=${encodeURIComponent(query)}`,
       });
       const data = await res.json();
-      const items = (data.elements || []).map((item) => {
+      return (data.elements || []).map((item) => {
         const lat = item.lat ?? item.center?.lat;
         const lon = item.lon ?? item.center?.lon;
         return {
@@ -76,7 +89,6 @@ export default function Chat() {
           status: "available",
         };
       });
-      return items;
     } catch (err) {
       console.warn("hospital lookup failed", err);
       return [];
@@ -226,7 +238,9 @@ export default function Chat() {
         const aHasPhone = a.phone && a.phone !== "N/A";
         const bHasPhone = b.phone && b.phone !== "N/A";
         if (aHasPhone !== bHasPhone) return aHasPhone ? -1 : 1;
-        return b.rating - a.rating || a.distanceKm - b.distanceKm;
+        const aRating = Number(a.rating) || 0;
+        const bRating = Number(b.rating) || 0;
+        return bRating - aRating || a.distanceKm - b.distanceKm;
       });
   }, [dynamicHospitals, overview]);
 

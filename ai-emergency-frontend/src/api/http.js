@@ -97,4 +97,13 @@ export async function getDashboardActivity() {
   return await safeFetch("/api/dashboard/activity", { method: "GET" });
 }
 
+export async function getNearbyHospitals(lat, lon, radius = 30000) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    radius: String(radius),
+  });
+  return await safeFetch(`/api/places/nearby?${params.toString()}`, { method: "GET" });
+}
+
 export { API_BASE };
