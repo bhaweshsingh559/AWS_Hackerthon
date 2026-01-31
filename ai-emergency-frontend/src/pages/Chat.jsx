@@ -11,6 +11,13 @@ export default function Chat() {
   const [pendingCall, setPendingCall] = useState(null);
   const [wearableSummary, setWearableSummary] = useState(null);
   const [showWearableModal, setShowWearableModal] = useState(false);
+  const [selectedWearable, setSelectedWearable] = useState(() => {
+    try {
+      return localStorage.getItem("wearableProvider") || "";
+    } catch {
+      return "";
+    }
+  });
   const navigate = useNavigate();
   const activityRef = useRef(null);
   const centerRef = useRef(null);
@@ -234,12 +241,23 @@ export default function Chat() {
   }, [overview]);
 
   const wearableMetrics = wearableSummary?.metrics || [];
-  const wearableProvider = wearableSummary?.provider || "Not connected";
+  const wearableProvider = wearableSummary?.provider || (selectedWearable ? `${selectedWearable} (connecting)` : "Not connected");
   const wearableProviders = wearableSummary?.supportedProviders || [];
   const hasWearableConnection = wearableProvider && wearableProvider !== "Not connected";
 
   const handleConnectWearable = () => {
     setShowWearableModal(true);
+  };
+
+  const handleSelectWearable = (provider) => {
+    try {
+      localStorage.setItem("wearableProvider", provider.name);
+    } catch {
+      // ignore storage failures
+    }
+    setSelectedWearable(provider.name);
+    setShowWearableModal(false);
+    window.open(provider.link, "_blank", "noopener,noreferrer");
   };
 
   const wearableProvidersConfig = [
@@ -569,16 +587,15 @@ export default function Chat() {
                 </div>
                 <div className="dashboard-wearable-modal-grid">
                   {wearableProvidersConfig.map((provider) => (
-                    <a
+                    <button
                       key={provider.id}
                       className="dashboard-wearable-provider"
-                      href={provider.link}
-                      target="_blank"
-                      rel="noreferrer"
+                      type="button"
+                      onClick={() => handleSelectWearable(provider)}
                     >
                       <div className="dashboard-wearable-provider-name">{provider.name}</div>
                       <div className="dashboard-wearable-provider-note">{provider.note}</div>
-                    </a>
+                    </button>
                   ))}
                 </div>
                 <div className="dashboard-callout-actions">
