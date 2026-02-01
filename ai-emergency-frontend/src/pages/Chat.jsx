@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardOverview, getNearbyHospitals, postEmergencyResponse } from "../api/http";
+import { getDashboardOverview, getNearbyHospitals, postAlert, postEmergencyResponse } from "../api/http";
 
 export default function Chat() {
   const IconBell = (props) => (
@@ -372,6 +372,12 @@ export default function Chat() {
         "call ambulance",
         "need help",
         "help",
+        "bachao",
+        "bachaoo",
+        "bachaoo please",
+        "koi mera picha kar raha hai",
+        "koi mera peecha kar raha hai",
+        "someone chasing me",
         "save me",
         "fire",
         "attack",
@@ -381,8 +387,7 @@ export default function Chat() {
         "panic",
         "faint",
       ];
-      const wakeActive = !wakePhraseEnabled || (wakePhraseActiveUntil && wakePhraseActiveUntil > Date.now());
-      if (!pendingEmergency && wakeActive && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
+      if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
         const phrase = combined.trim();
         setPendingEmergency({
           remaining: 10,
@@ -605,20 +610,25 @@ export default function Chat() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const handleEmergencyAlert = (pending) => {
+  const handleEmergencyAlert = async (pending) => {
     if (!pending) return;
     const locationLink = currentLocation
       ? `https://www.google.com/maps/search/?api=1&query=${currentLocation.lat},${currentLocation.lon}`
       : "Location unavailable";
     const name = user?.name || "User";
-    const contact = emergencyContact;
     const message = `Emergency detected for ${name}. Heard: "${pending.phrase}". Location: ${locationLink}`;
-    if (contact && contact !== "N/A") {
-      const digits = contact.replace(/[^+\d]/g, "");
-      const url = digits
-        ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
+    const contacts = getStoredContacts();
+    if (contacts.length > 0) {
+      try {
+        await postAlert({
+          message,
+          location: currentLocation || null,
+          contacts,
+        });
+      } catch (err) {
+        console.warn("failed to send SMS alert", err);
+        window.alert(message);
+      }
     } else {
       window.alert(message);
     }
@@ -756,7 +766,7 @@ export default function Chat() {
               <span className={`dashboard-voice-dot ${isListening ? "is-active" : ""}`} />
               {speechSupported ? (
                 isListening
-                  ? (wakePhraseEnabled ? "Say “Hey Rakshak” to arm emergency listening…" : "Listening for emergency keywords…")
+                  ? (wakePhraseEnabled ? "Wake phrase on • Listening for emergency keywords…" : "Listening for emergency keywords…")
                   : "Tap mic to start listening."
               ) : "Speech recognition not supported."}
             </div>
