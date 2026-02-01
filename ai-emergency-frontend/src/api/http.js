@@ -30,6 +30,9 @@ export async function safeFetch(pathOrUrl, opts = {}) {
   }
 
   if (!res.ok) {
+    if (opts.allowNotFound && res.status === 404) {
+      return null;
+    }
     const err = new Error(json?.error || json || text || res.statusText || `HTTP ${res.status}`);
     err.status = res.status;
     err.body = json || text;
@@ -94,11 +97,13 @@ export async function postUpdateProfile(updates = {}) {
 }
 
 export async function getDashboardOverview() {
-  return await safeFetch("/api/dashboard/overview", { method: "GET" });
+  const resp = await safeFetch("/api/dashboard/overview", { method: "GET", allowNotFound: true });
+  return resp || { overview: null };
 }
 
 export async function getDashboardActivity() {
-  return await safeFetch("/api/dashboard/activity", { method: "GET" });
+  const resp = await safeFetch("/api/dashboard/activity", { method: "GET", allowNotFound: true });
+  return resp || { activities: [] };
 }
 
 export async function getNearbyHospitals(lat, lon, radius = 30000) {
@@ -107,7 +112,8 @@ export async function getNearbyHospitals(lat, lon, radius = 30000) {
     lon: String(lon),
     radius: String(radius),
   });
-  return await safeFetch(`/api/places/nearby?${params.toString()}`, { method: "GET" });
+  const resp = await safeFetch(`/api/places/nearby?${params.toString()}`, { method: "GET", allowNotFound: true });
+  return resp || { hospitals: [] };
 }
 
 export { API_BASE };
