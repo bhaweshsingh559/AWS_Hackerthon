@@ -13,7 +13,7 @@ router.post("/chat", requireAuth, assistantChat);
 router.post("/detect", requireAuth, detectEmergencyText);
 router.post("/classify", requireAuth, classifyIncident);
 
-router.post("/alert", requireAuth, async (req, res, next) => {
+router.post("/alert", async (req, res, next) => {
   try {
     const { message, location, contacts } = req.body || {};
 
