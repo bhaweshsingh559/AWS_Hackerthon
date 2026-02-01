@@ -76,6 +76,10 @@ export async function postClassifyIncident(payload) {
   return await safeFetch("/api/emergency/classify", { method: "POST", body: payload });
 }
 
+export async function postEmergencyResponse(payload) {
+  return await safeFetch("/api/emergency/respond", { method: "POST", body: payload });
+}
+
 export async function postAlert(payload) {
   return await safeFetch("/api/emergency/alert", { method: "POST", body: payload });
 }
