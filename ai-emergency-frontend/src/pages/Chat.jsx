@@ -331,7 +331,16 @@ export default function Chat() {
     recognition.interimResults = true;
     recognition.lang = "en-US";
     recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+      if (wakePhraseEnabled) {
+        try {
+          recognition.start();
+        } catch (err) {
+          console.warn("auto-restart recognition failed", err);
+        }
+      }
+    };
     recognition.onerror = (event) => {
       console.warn("speech recognition error", event);
       setIsListening(false);
