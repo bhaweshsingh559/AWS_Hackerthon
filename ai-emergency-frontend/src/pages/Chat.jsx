@@ -297,7 +297,17 @@ export default function Chat() {
   const getStoredContacts = () => {
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
-      return stored?.emergencyContacts || [];
+      const rawContacts = stored?.emergencyContacts || stored?.EmergencyContacts || [];
+      if (Array.isArray(rawContacts)) return rawContacts;
+      if (typeof rawContacts === "string") {
+        try {
+          const parsed = JSON.parse(rawContacts);
+          if (Array.isArray(parsed)) return parsed;
+        } catch {
+          return rawContacts.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+      }
+      return [];
     } catch {
       return [];
     }
@@ -396,7 +406,7 @@ export default function Chat() {
         "faint",
       ];
       if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
-        const phrase = combined.trim();
+        const phrase = finalTranscript.trim() || interim.trim() || combined.trim();
         transcriptRef.current = phrase;
         setEmergencyTranscript(phrase);
         setPendingEmergency({
