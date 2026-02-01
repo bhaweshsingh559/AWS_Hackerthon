@@ -650,6 +650,19 @@ export default function Chat() {
               <span className="dashboard-voice-final">{transcript}</span>
               {interimTranscript && <span className="dashboard-voice-interim"> {interimTranscript}</span>}
             </div>
+            {emergencyResponse?.response && (
+              <div className="dashboard-voice-guidance">
+                <div className="dashboard-voice-guidance-title">Rakshak Guidance</div>
+                <div className="dashboard-voice-guidance-text">{emergencyResponse.response}</div>
+                {Array.isArray(emergencyResponse.instructions) && emergencyResponse.instructions.length > 0 && (
+                  <ul className="dashboard-voice-guidance-list">
+                    {emergencyResponse.instructions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
           {loading && <div className="dashboard-hint">Syncing emergency context…</div>}
         </div>

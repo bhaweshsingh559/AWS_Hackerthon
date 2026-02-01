@@ -460,6 +460,32 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
 .dashboard-voice-interim {
   color: rgba(138,161,198,0.9);
 }
+.dashboard-voice-guidance {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(18,26,42,0.75);
+  border: 1px solid rgba(76,125,255,0.3);
+}
+.dashboard-voice-guidance-title {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(168,179,207,0.9);
+  margin-bottom: 6px;
+}
+.dashboard-voice-guidance-text {
+  font-size: 13px;
+  color: #f1f5ff;
+  line-height: 1.5;
+}
+.dashboard-voice-guidance-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: rgba(234,240,255,0.78);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
 .dashboard-hint {
   font-size: 12px;
   color: #8aa1c6;
