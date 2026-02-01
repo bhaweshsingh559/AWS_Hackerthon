@@ -87,8 +87,8 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
 - Web Speech API (Web)
 - Native speech SDKs (Mobile)
 
-**Offline fallback — _In Progress_**
-- Local keyword spotter for "help help"
+**Offline fallback — _Completed (Web)_**
+- Local keyword spotting for repeated phrases (e.g., "help help")
 
 **Voice Feedback (TTS) — _Completed (Web)_**
 - Emergency confirmation (browser TTS)
