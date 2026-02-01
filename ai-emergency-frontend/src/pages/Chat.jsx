@@ -149,6 +149,7 @@ export default function Chat() {
   const contextRef = useRef(null);
   const recognitionRef = useRef(null);
   const transcriptRef = useRef("");
+  const recognitionActiveRef = useRef(false);
 
   const handleScrollTo = (ref) => {
     if (!ref.current) return;
@@ -341,12 +342,16 @@ export default function Chat() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
-    recognition.onstart = () => setIsListening(true);
+    recognition.onstart = () => {
+      recognitionActiveRef.current = true;
+      setIsListening(true);
+    };
     recognition.onend = () => {
+      recognitionActiveRef.current = false;
       setIsListening(false);
       if (wakePhraseEnabled) {
         try {
-          recognition.start();
+          if (!recognitionActiveRef.current) recognition.start();
         } catch (err) {
           console.warn("auto-restart recognition failed", err);
         }
@@ -354,10 +359,11 @@ export default function Chat() {
     };
     recognition.onerror = (event) => {
       console.warn("speech recognition error", event);
+      recognitionActiveRef.current = false;
       setIsListening(false);
       if (wakePhraseEnabled) {
         try {
-          recognition.start();
+          if (!recognitionActiveRef.current) recognition.start();
         } catch (err) {
           console.warn("auto-restart after error failed", err);
         }
@@ -450,7 +456,7 @@ export default function Chat() {
         console.warn("microphone permission denied", err);
       }
       try {
-        recognitionRef.current.start();
+        if (!recognitionActiveRef.current) recognitionRef.current.start();
       } catch (err) {
         console.warn("auto-start recognition failed", err);
       }
@@ -464,7 +470,7 @@ export default function Chat() {
     const interval = setInterval(() => {
       if (!isListening) {
         try {
-          recognitionRef.current.start();
+          if (!recognitionActiveRef.current) recognitionRef.current.start();
         } catch (err) {
           console.warn("periodic restart failed", err);
         }
@@ -716,7 +722,7 @@ export default function Chat() {
       setTranscript("");
       setInterimTranscript("");
       transcriptRef.current = "";
-      recognitionRef.current.start();
+      if (!recognitionActiveRef.current) recognitionRef.current.start();
     }
   };
 
