@@ -345,6 +345,13 @@ export default function Chat() {
     recognition.onerror = (event) => {
       console.warn("speech recognition error", event);
       setIsListening(false);
+      if (wakePhraseEnabled) {
+        try {
+          recognition.start();
+        } catch (err) {
+          console.warn("auto-restart after error failed", err);
+        }
+      }
     };
     recognition.onresult = (event) => {
       let interim = "";
@@ -439,6 +446,21 @@ export default function Chat() {
     };
     requestMic();
   }, [speechSupported]);
+
+  useEffect(() => {
+    if (!speechSupported || !recognitionRef.current) return;
+    if (!wakePhraseEnabled) return;
+    const interval = setInterval(() => {
+      if (!isListening) {
+        try {
+          recognitionRef.current.start();
+        } catch (err) {
+          console.warn("periodic restart failed", err);
+        }
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [speechSupported, wakePhraseEnabled, isListening]);
 
   useEffect(() => {
     if (!pendingCall) return undefined;
