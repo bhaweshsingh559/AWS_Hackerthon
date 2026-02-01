@@ -381,6 +381,15 @@ export default function Chat() {
           interim += ` ${text}`;
         }
       }
+      if (finalTranscript.trim()) {
+        setTranscript((prev) => {
+          const updated = `${prev} ${finalTranscript}`.trim();
+          transcriptRef.current = updated;
+          return updated;
+        });
+      }
+      setInterimTranscript(interim.trim());
+
       const combined = `${finalTranscript} ${interim}`.toLowerCase();
       const wakePhrases = ["hey rakshak", "emergency assistant"];
       const wakeDetected = wakePhrases.some((phrase) => combined.includes(phrase));
@@ -847,6 +856,10 @@ export default function Chat() {
               <span />
               <span />
               <span />
+            </div>
+            <div className="dashboard-voice-transcript">
+              <span className="dashboard-voice-final">{transcript}</span>
+              {interimTranscript && <span className="dashboard-voice-interim"> {interimTranscript}</span>}
             </div>
             {emergencyTranscript && (
               <div className="dashboard-voice-transcript">
