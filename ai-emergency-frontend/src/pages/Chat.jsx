@@ -137,6 +137,8 @@ export default function Chat() {
   const [emergencyResponse, setEmergencyResponse] = useState(null);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [wakePhraseEnabled, setWakePhraseEnabled] = useState(false);
+  const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -356,6 +358,12 @@ export default function Chat() {
       setInterimTranscript(interim.trim());
 
       const combined = `${transcriptRef.current} ${finalTranscript} ${interim}`.toLowerCase();
+      const wakePhrases = ["hey rakshak", "emergency assistant"];
+      const wakeDetected = wakePhrases.some((phrase) => combined.includes(phrase));
+      if (wakePhraseEnabled && wakeDetected) {
+        const activeUntil = Date.now() + 20000;
+        setWakePhraseActiveUntil(activeUntil);
+      }
       const emergencyKeywords = [
         "help me",
         "i am in trouble",
@@ -373,7 +381,8 @@ export default function Chat() {
         "panic",
         "faint",
       ];
-      if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
+      const wakeActive = !wakePhraseEnabled || (wakePhraseActiveUntil && wakePhraseActiveUntil > Date.now());
+      if (!pendingEmergency && wakeActive && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
         const phrase = combined.trim();
         setPendingEmergency({
           remaining: 10,
@@ -401,7 +410,7 @@ export default function Chat() {
     return () => {
       recognition.stop();
     };
-  }, [pendingEmergency]);
+  }, [pendingEmergency, wakePhraseEnabled, wakePhraseActiveUntil]);
 
   useEffect(() => {
     if (!pendingCall) return undefined;
@@ -636,6 +645,24 @@ export default function Chat() {
     }
   };
 
+  const handleWakePhraseToggle = () => {
+    if (!speechSupported || !recognitionRef.current) return;
+    setWakePhraseEnabled((prev) => {
+      const next = !prev;
+      if (next) {
+        setWakePhraseActiveUntil(null);
+        try {
+          recognitionRef.current.start();
+        } catch (err) {
+          console.warn("wake phrase start failed", err);
+        }
+      } else {
+        setWakePhraseActiveUntil(null);
+      }
+      return next;
+    });
+  };
+
   const isEmergencyMode = Boolean(pendingEmergency);
 
   return (
@@ -712,6 +739,13 @@ export default function Chat() {
           <button className={`dashboard-mic ${isListening ? "dashboard-mic--active" : ""}`} onClick={handleMicToggle}>
             <IconMic className="icon" />
           </button>
+          <button
+            className={`dashboard-link ${wakePhraseEnabled ? "dashboard-link--active" : ""}`}
+            type="button"
+            onClick={handleWakePhraseToggle}
+          >
+            {wakePhraseEnabled ? "Wake phrase on" : "Wake phrase off"}
+          </button>
           {isEmergencyMode && (
             <button className="dashboard-emergency-cancel" onClick={handleCancelEmergency}>
               CANCEL
@@ -720,7 +754,11 @@ export default function Chat() {
           <div className="dashboard-voice-panel">
             <div className="dashboard-voice-status">
               <span className={`dashboard-voice-dot ${isListening ? "is-active" : ""}`} />
-              {speechSupported ? (isListening ? "Listening for emergency keywords…" : "Tap mic to start listening.") : "Speech recognition not supported."}
+              {speechSupported ? (
+                isListening
+                  ? (wakePhraseEnabled ? "Say “Hey Rakshak” to arm emergency listening…" : "Listening for emergency keywords…")
+                  : "Tap mic to start listening."
+              ) : "Speech recognition not supported."}
             </div>
             <div className={`dashboard-voice-wave ${isListening ? "is-active" : ""}`}>
               <span />

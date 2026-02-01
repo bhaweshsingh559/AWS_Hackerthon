@@ -523,6 +523,10 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   padding: 0;
   cursor: pointer;
 }
+.dashboard-link--active {
+  color: #2ee7f2;
+  text-shadow: 0 0 12px rgba(46,231,242,0.45);
+}
 
 .voice-toggle {
   position: relative;
