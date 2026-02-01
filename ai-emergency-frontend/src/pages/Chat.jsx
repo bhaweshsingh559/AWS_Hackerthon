@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardOverview, getNearbyHospitals } from "../api/http";
+import { getDashboardOverview, getNearbyHospitals, postEmergencyResponse } from "../api/http";
 
 export default function Chat() {
   const IconBell = (props) => (
@@ -133,6 +133,8 @@ export default function Chat() {
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
   const [pendingEmergency, setPendingEmergency] = useState(null);
+  const [emergencyResponse, setEmergencyResponse] = useState(null);
+  const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -237,6 +239,36 @@ export default function Chat() {
     return Number((R * c).toFixed(1));
   };
 
+  const buildLocalEmergencyFallback = (text) => {
+    const lowered = text.toLowerCase();
+    if (["heart attack", "chest pain", "cardiac", "no pulse", "not breathing", "cant breathe", "can't breathe"].some((term) => lowered.includes(term))) {
+      return {
+        response: "Possible critical medical emergency detected. Call emergency services now and monitor breathing.",
+        instructions: [
+          "Call emergency services immediately.",
+          "Keep the person still and monitor breathing.",
+          "Prepare to perform CPR if breathing stops and you are trained.",
+        ],
+      };
+    }
+    return {
+      response: "Possible emergency detected. If this is urgent, call local emergency services immediately.",
+      instructions: [
+        "Call emergency services if needed.",
+        "Stay calm and describe the situation clearly.",
+      ],
+    };
+  };
+
+  const getStoredContacts = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "null");
+      return stored?.emergencyContacts || [];
+    } catch {
+      return [];
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -311,10 +343,26 @@ export default function Chat() {
         "faint",
       ];
       if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
+        const phrase = combined.trim();
         setPendingEmergency({
           remaining: 10,
-          phrase: combined.trim(),
+          phrase,
         });
+        setEmergencyResponse(null);
+        setEmergencyLoading(true);
+        postEmergencyResponse({
+          text: phrase,
+          context: {
+            location: currentLocation || null,
+          },
+          contacts: getStoredContacts(),
+        })
+          .then((resp) => setEmergencyResponse(resp))
+          .catch((err) => {
+            console.warn("emergency response failed", err);
+            setEmergencyResponse(buildLocalEmergencyFallback(phrase));
+          })
+          .finally(() => setEmergencyLoading(false));
         recognition.stop();
       }
     };
@@ -535,10 +583,14 @@ export default function Chat() {
       window.alert(message);
     }
     setPendingEmergency(null);
+    setEmergencyResponse(null);
+    setEmergencyLoading(false);
   };
 
   const handleCancelEmergency = () => {
     setPendingEmergency(null);
+    setEmergencyResponse(null);
+    setEmergencyLoading(false);
   };
 
   const handleMicToggle = () => {
@@ -650,6 +702,12 @@ export default function Chat() {
               <span className="dashboard-voice-final">{transcript}</span>
               {interimTranscript && <span className="dashboard-voice-interim"> {interimTranscript}</span>}
             </div>
+            {emergencyLoading && (
+              <div className="dashboard-voice-guidance">
+                <div className="dashboard-voice-guidance-title">Rakshak Guidance</div>
+                <div className="dashboard-voice-guidance-text">Fetching guidance…</div>
+              </div>
+            )}
             {emergencyResponse?.response && (
               <div className="dashboard-voice-guidance">
                 <div className="dashboard-voice-guidance-title">Rakshak Guidance</div>
