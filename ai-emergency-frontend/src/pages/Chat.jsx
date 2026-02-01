@@ -660,6 +660,13 @@ export default function Chat() {
     setPendingEmergency(null);
     setEmergencyResponse(null);
     setEmergencyLoading(false);
+    if (speechSupported && recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+      } catch (err) {
+        console.warn("resume recognition failed", err);
+      }
+    }
   };
 
   const handleMicToggle = () => {
