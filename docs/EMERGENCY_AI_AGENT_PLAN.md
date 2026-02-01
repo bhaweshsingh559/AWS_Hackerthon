@@ -66,6 +66,12 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
 - Overview data endpoint (`GET /api/dashboard/overview`)
 - Activity export endpoint (`GET /api/dashboard/activity`)
 
+### 2.3 Emergency Guidance (Bedrock) — **Completed**
+
+- Bedrock-powered guidance response for emergency phrases with keyword fallback
+- Guidance rendered in the web chat/voice panel
+- Endpoint: `POST /api/emergency/respond`
+
 ---
 
 ## 3. Voice Assistant (Hands-Free Safety) — **In Progress**
@@ -113,7 +119,7 @@ Identify nearest:
 - Hospitals
 - Police stations
 
-Show **Directions** buttons (map search links) in the web UI. No automatic calling without user action.
+Show **Directions** buttons (map search links) in the web UI. For medical emergencies, the top-rated nearby hospital can be included in the alert payload. No automatic calling without user action.
 
 **Step 3 — Continuous Tracking (Optional) — _In Progress_**
 
@@ -130,9 +136,9 @@ Show **Directions** buttons (map search links) in the web UI. No automatic calli
 - Last known location (offline)
 
 **Capabilities — _In Progress_**
-- Reverse geocoding
-- Distance-based ranking
-- Google Maps deep links
+- Reverse geocoding — _In Progress_
+- Distance-based ranking — _Completed (Web)_
+- Google Maps deep links — _Completed (Web)_
 
 **Data Stored (Minimal) — _In Progress_**
 - Latitude / Longitude
@@ -143,16 +149,19 @@ Show **Directions** buttons (map search links) in the web UI. No automatic calli
 
 ## 6. Hospital & Police Discovery — **In Progress**
 
-**Data Sources**
+**Data Sources — _Completed (Web)_**
 - Google Places API (primary)
 - OpenStreetMap / Overpass (fallback)
 
-**Strategy**
+**Strategy — _Completed (Web)_**
 - Search by current location
 - Rank by:
   - Distance
   - Emergency availability
-  - Reputation (optional curated list)
+  - Reputation (ratings)
+
+**Police Discovery — _In Progress_**
+- Police station discovery and ranking
 
 **Important Note**
 
@@ -162,7 +171,7 @@ Rakshak does not directly dispatch hospitals or police unless official APIs/part
 
 ## 7. Multi-Platform Support — **In Progress**
 
-**Web Application — _In Progress_**
+**Web Application — _Completed (Web)_**
 - Voice input (Web Speech API)
 - SOS UI
 - Location-based emergency suggestions
@@ -266,12 +275,12 @@ ENABLE_LIVE_LOCATION=true
 
 ## 13. Implementation Phases (Status)
 
-**Phase 1 — Web Voice MVP — _In Progress_**
+**Phase 1 — Web Voice MVP — _Completed (Web)_**
 - Voice input
 - Keyword detection
 - SOS + contact alerts
 
-**Phase 2 — AI Classification — _In Progress_**
+**Phase 2 — AI Classification — _Completed (Server)_**
 - Incident classification
 - Smarter routing
 
