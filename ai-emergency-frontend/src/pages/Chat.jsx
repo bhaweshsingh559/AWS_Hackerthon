@@ -130,6 +130,7 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [locationAddress, setLocationAddress] = useState("");
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
   const [pendingEmergency, setPendingEmergency] = useState(null);
@@ -174,6 +175,36 @@ export default function Chat() {
       );
     });
   };
+
+  useEffect(() => {
+    if (!currentLocation) return undefined;
+    const controller = new AbortController();
+    const fetchAddress = async () => {
+      try {
+        const params = new URLSearchParams({
+          format: "jsonv2",
+          lat: String(currentLocation.lat),
+          lon: String(currentLocation.lon),
+          zoom: "18",
+          addressdetails: "1",
+        });
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+          signal: controller.signal,
+          headers: { "Accept-Language": "en" },
+        });
+        if (!resp.ok) throw new Error(`reverse geocode failed: ${resp.status}`);
+        const data = await resp.json();
+        const label = data.display_name || "";
+        setLocationAddress(label);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.warn("reverse geocoding failed", err);
+        }
+      }
+    };
+    fetchAddress();
+    return () => controller.abort();
+  }, [currentLocation]);
 
   const fetchNearbyHospitals = async (coords) => {
     if (!coords) return [];
@@ -499,7 +530,7 @@ export default function Chat() {
   })();
   const emergencyContact = storedUser?.emergencyContacts?.[0] || "N/A";
   const displayLocation = currentLocation
-    ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`
+    ? (locationAddress || `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`)
     : hero.location;
   const locationQuery = encodeURIComponent(`${displayLocation} hospitals`);
   const mapUrl = currentLocation

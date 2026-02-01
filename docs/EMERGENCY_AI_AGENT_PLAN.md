@@ -136,7 +136,7 @@ Show **Directions** buttons (map search links) in the web UI. For medical emerge
 - Last known location (offline)
 
 **Capabilities — _In Progress_**
-- Reverse geocoding — _In Progress_
+- Reverse geocoding — _Completed (Web)_
 - Distance-based ranking — _Completed (Web)_
 - Google Maps deep links — _Completed (Web)_
 
