@@ -365,7 +365,7 @@ export default function Chat() {
           interim += ` ${text}`;
         }
       }
-      const combined = `${transcriptRef.current} ${finalTranscript} ${interim}`.toLowerCase();
+      const combined = `${finalTranscript} ${interim}`.toLowerCase();
       const wakePhrases = ["hey rakshak", "emergency assistant"];
       const wakeDetected = wakePhrases.some((phrase) => combined.includes(phrase));
       if (wakePhraseEnabled && wakeDetected) {
@@ -397,6 +397,7 @@ export default function Chat() {
       ];
       if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
         const phrase = combined.trim();
+        transcriptRef.current = phrase;
         setEmergencyTranscript(phrase);
         setPendingEmergency({
           remaining: 10,
