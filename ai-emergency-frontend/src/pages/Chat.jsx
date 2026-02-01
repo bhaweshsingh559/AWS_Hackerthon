@@ -141,6 +141,7 @@ export default function Chat() {
   const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
+  const [emergencyTranscript, setEmergencyTranscript] = useState("");
   const [speechSupported, setSpeechSupported] = useState(true);
   const navigate = useNavigate();
   const activityRef = useRef(null);
@@ -357,15 +358,6 @@ export default function Chat() {
           interim += ` ${text}`;
         }
       }
-      if (finalTranscript.trim()) {
-        setTranscript((prev) => {
-          const updated = `${prev} ${finalTranscript}`.trim();
-          transcriptRef.current = updated;
-          return updated;
-        });
-      }
-      setInterimTranscript(interim.trim());
-
       const combined = `${transcriptRef.current} ${finalTranscript} ${interim}`.toLowerCase();
       const wakePhrases = ["hey rakshak", "emergency assistant"];
       const wakeDetected = wakePhrases.some((phrase) => combined.includes(phrase));
@@ -398,6 +390,7 @@ export default function Chat() {
       ];
       if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
         const phrase = combined.trim();
+        setEmergencyTranscript(phrase);
         setPendingEmergency({
           remaining: 10,
           phrase,
@@ -418,6 +411,8 @@ export default function Chat() {
           })
           .finally(() => setEmergencyLoading(false));
         recognition.stop();
+      } else {
+        setEmergencyTranscript("");
       }
     };
     recognitionRef.current = recognition;
@@ -663,12 +658,14 @@ export default function Chat() {
     setPendingEmergency(null);
     setEmergencyResponse(null);
     setEmergencyLoading(false);
+    setEmergencyTranscript("");
   };
 
   const handleCancelEmergency = () => {
     setPendingEmergency(null);
     setEmergencyResponse(null);
     setEmergencyLoading(false);
+    setEmergencyTranscript("");
     if (speechSupported && recognitionRef.current) {
       try {
         recognitionRef.current.start();
@@ -812,10 +809,11 @@ export default function Chat() {
               <span />
               <span />
             </div>
-            <div className="dashboard-voice-transcript">
-              <span className="dashboard-voice-final">{transcript}</span>
-              {interimTranscript && <span className="dashboard-voice-interim"> {interimTranscript}</span>}
-            </div>
+            {emergencyTranscript && (
+              <div className="dashboard-voice-transcript">
+                <span className="dashboard-voice-final">{emergencyTranscript}</span>
+              </div>
+            )}
             {emergencyLoading && (
               <div className="dashboard-voice-guidance">
                 <div className="dashboard-voice-guidance-title">Rakshak Guidance</div>
@@ -876,7 +874,7 @@ export default function Chat() {
               const ratingValue = Number(hospital.rating);
               const ratingLabel = Number.isFinite(ratingValue) && ratingValue > 0 ? ratingValue.toFixed(1) : "Not rated";
               return (
-                <div key={hospital.name} className="dashboard-hospital-card">
+                <div key={`${hospital.name}-${hospital.lat ?? "x"}-${hospital.lon ?? "y"}-${hospital.address ?? ""}`} className="dashboard-hospital-card">
                   <div>
                   <button
                     className="dashboard-hospital-name dashboard-hospital-link"
