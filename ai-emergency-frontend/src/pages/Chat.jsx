@@ -137,7 +137,7 @@ export default function Chat() {
   const [emergencyResponse, setEmergencyResponse] = useState(null);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [wakePhraseEnabled, setWakePhraseEnabled] = useState(false);
+  const [wakePhraseEnabled, setWakePhraseEnabled] = useState(true);
   const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -416,6 +416,25 @@ export default function Chat() {
       recognition.stop();
     };
   }, [pendingEmergency, wakePhraseEnabled, wakePhraseActiveUntil]);
+
+  useEffect(() => {
+    if (!speechSupported || !recognitionRef.current) return;
+    const requestMic = async () => {
+      try {
+        if (navigator.mediaDevices?.getUserMedia) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+      } catch (err) {
+        console.warn("microphone permission denied", err);
+      }
+      try {
+        recognitionRef.current.start();
+      } catch (err) {
+        console.warn("auto-start recognition failed", err);
+      }
+    };
+    requestMic();
+  }, [speechSupported]);
 
   useEffect(() => {
     if (!pendingCall) return undefined;
@@ -767,7 +786,7 @@ export default function Chat() {
               {speechSupported ? (
                 isListening
                   ? (wakePhraseEnabled ? "Wake phrase on • Listening for emergency keywords…" : "Listening for emergency keywords…")
-                  : "Tap mic to start listening."
+                  : "Allow mic access to enable always-on listening."
               ) : "Speech recognition not supported."}
             </div>
             <div className={`dashboard-voice-wave ${isListening ? "is-active" : ""}`}>
