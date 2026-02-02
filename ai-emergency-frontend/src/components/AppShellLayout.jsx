@@ -7,6 +7,7 @@ import { useAuth } from "../App";
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/dashboard", label: "Dashboard" },
+  { to: "/chat", label: "Chat" },
   { to: "/profile", label: "Profile" },
 ];
 

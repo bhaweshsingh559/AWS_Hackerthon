@@ -75,6 +75,10 @@ export async function postAnalyze(payload) {
   return await safeFetch("/api/emergency/analyze", { method: "POST", body: payload });
 }
 
+export async function postEmergencyChat(payload) {
+  return await safeFetch("/api/emergency/chat", { method: "POST", body: payload });
+}
+
 export async function postClassifyIncident(payload) {
   return await safeFetch("/api/emergency/classify", { method: "POST", body: payload });
 }

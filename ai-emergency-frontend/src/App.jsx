@@ -15,6 +15,7 @@ import ThemeToggle from "./components/ThemeToggle";
 /* Placeholder pages — you'll replace with real imports later */
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
+import ChatAI from "./pages/ChatAI";
 import Profile from "./components/Profile";
 import Register from "./components/Register";
 import Login from "./components/Login";
@@ -99,7 +100,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/chat" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatAI />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={
