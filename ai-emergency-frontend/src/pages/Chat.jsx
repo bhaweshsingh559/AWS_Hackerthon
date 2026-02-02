@@ -456,6 +456,10 @@ export default function Chat() {
   }, [pendingEmergency, wakePhraseEnabled, wakePhraseActiveUntil]);
 
   const ensureMicAccess = async () => {
+    if (!window.isSecureContext) {
+      setMicStatus("insecure");
+      return false;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setMicStatus("unsupported");
       return false;
@@ -861,7 +865,11 @@ export default function Chat() {
               {speechSupported ? (
                 isListening
                   ? (wakePhraseEnabled ? "Wake phrase on • Listening for emergency keywords…" : "Listening for emergency keywords…")
-                  : (micStatus === "blocked" ? "Microphone blocked. Tap mic to allow access." : "Allow mic access to enable always-on listening.")
+                  : (micStatus === "insecure"
+                    ? "Microphone requires HTTPS. Open the site over HTTPS to enable listening."
+                    : micStatus === "blocked"
+                      ? "Microphone blocked. Tap mic to allow access."
+                      : "Allow mic access to enable always-on listening.")
               ) : "Speech recognition not supported."}
             </div>
             <div className={`dashboard-voice-wave ${isListening ? "is-active" : ""}`}>
