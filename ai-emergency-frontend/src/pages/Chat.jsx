@@ -142,6 +142,7 @@ export default function Chat() {
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [emergencyTranscript, setEmergencyTranscript] = useState("");
+  const [micStatus, setMicStatus] = useState("unknown");
   const [speechSupported, setSpeechSupported] = useState(true);
   const navigate = useNavigate();
   const activityRef = useRef(null);
@@ -454,16 +455,26 @@ export default function Chat() {
     };
   }, [pendingEmergency, wakePhraseEnabled, wakePhraseActiveUntil]);
 
+  const ensureMicAccess = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicStatus("unsupported");
+      return false;
+    }
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStatus("granted");
+      return true;
+    } catch (err) {
+      console.warn("microphone permission denied", err);
+      setMicStatus("blocked");
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!speechSupported || !recognitionRef.current) return;
     const requestMic = async () => {
-      try {
-        if (navigator.mediaDevices?.getUserMedia) {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-        }
-      } catch (err) {
-        console.warn("microphone permission denied", err);
-      }
+      await ensureMicAccess();
       try {
         if (!recognitionActiveRef.current) recognitionRef.current.start();
       } catch (err) {
@@ -723,7 +734,7 @@ export default function Chat() {
     }
   };
 
-  const handleMicToggle = () => {
+  const handleMicToggle = async () => {
     if (!speechSupported || !recognitionRef.current) return;
     if (isListening) {
       recognitionRef.current.stop();
@@ -731,18 +742,21 @@ export default function Chat() {
       setTranscript("");
       setInterimTranscript("");
       transcriptRef.current = "";
-      if (!recognitionActiveRef.current) recognitionRef.current.start();
+      const allowed = await ensureMicAccess();
+      if (allowed && !recognitionActiveRef.current) recognitionRef.current.start();
     }
   };
 
-  const handleWakePhraseToggle = () => {
+  const handleWakePhraseToggle = async () => {
     if (!speechSupported || !recognitionRef.current) return;
     setWakePhraseEnabled((prev) => {
       const next = !prev;
       if (next) {
         setWakePhraseActiveUntil(null);
         try {
-          recognitionRef.current.start();
+          ensureMicAccess().then((allowed) => {
+            if (allowed && !recognitionActiveRef.current) recognitionRef.current.start();
+          });
         } catch (err) {
           console.warn("wake phrase start failed", err);
         }
@@ -847,7 +861,7 @@ export default function Chat() {
               {speechSupported ? (
                 isListening
                   ? (wakePhraseEnabled ? "Wake phrase on • Listening for emergency keywords…" : "Listening for emergency keywords…")
-                  : "Allow mic access to enable always-on listening."
+                  : (micStatus === "blocked" ? "Microphone blocked. Tap mic to allow access." : "Allow mic access to enable always-on listening.")
               ) : "Speech recognition not supported."}
             </div>
             <div className={`dashboard-voice-wave ${isListening ? "is-active" : ""}`}>
