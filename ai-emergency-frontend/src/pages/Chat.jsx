@@ -136,6 +136,9 @@ export default function Chat() {
   const [pendingEmergency, setPendingEmergency] = useState(null);
   const [emergencyResponse, setEmergencyResponse] = useState(null);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatPending, setChatPending] = useState(false);
+  const [chatResponse, setChatResponse] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [wakePhraseEnabled, setWakePhraseEnabled] = useState(true);
   const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
@@ -724,6 +727,57 @@ export default function Chat() {
     setEmergencyTranscript("");
   };
 
+  const handleSosTrigger = () => {
+    if (pendingEmergency) return;
+    const phrase = "SOS button triggered";
+    setEmergencyTranscript(phrase);
+    setPendingEmergency({
+      remaining: 10,
+      phrase,
+    });
+  };
+
+  const handleChatSubmit = async (event) => {
+    event.preventDefault();
+    const text = chatMessage.trim();
+    if (!text) return;
+    setChatPending(true);
+    setChatResponse(null);
+    try {
+      const response = await postEmergencyResponse({
+        text,
+        context: {
+          location: currentLocation || null,
+        },
+        contacts: getStoredContacts(),
+      });
+      setChatResponse(response);
+      const contacts = getStoredContacts();
+      if (contacts.length > 0) {
+        const locationLink = currentLocation
+          ? `https://www.google.com/maps/search/?api=1&query=${currentLocation.lat},${currentLocation.lon}`
+          : "Location unavailable";
+        const message = `Emergency assistance requested: "${text}". Location: ${locationLink}`;
+        await postAlert({
+          message,
+          location: currentLocation || null,
+          contacts,
+        });
+      }
+    } catch (err) {
+      console.warn("chat emergency failed", err);
+      setChatResponse({
+        response: "Unable to reach the emergency assistant. Please call local emergency services immediately.",
+        instructions: [
+          "Call emergency services if needed.",
+          "Share your location with a trusted contact.",
+        ],
+      });
+    } finally {
+      setChatPending(false);
+    }
+  };
+
   const handleCancelEmergency = () => {
     setPendingEmergency(null);
     setEmergencyResponse(null);
@@ -1025,6 +1079,75 @@ export default function Chat() {
               </button>
             )}
           </div>
+
+          <div className="dashboard-panel-title dashboard-title-inline">
+            Emergency Chat
+            <button
+              className="dashboard-link"
+              onClick={() =>
+                window.open(
+                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${displayLocation} police station`)}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+            >
+              Nearby Police
+            </button>
+          </div>
+          <form className="dashboard-chat-form" onSubmit={handleChatSubmit}>
+            <textarea
+              className="dashboard-chat-input"
+              rows={3}
+              placeholder="Describe the emergency (medical, accident, weather, crime...)"
+              value={chatMessage}
+              onChange={(event) => setChatMessage(event.target.value)}
+            />
+            <button className="dashboard-chat-submit" type="submit" disabled={chatPending}>
+              {chatPending ? "Sending…" : "Send"}
+            </button>
+          </form>
+          {chatResponse?.response && (
+            <div className="dashboard-chat-response">
+              <div className="dashboard-voice-guidance-title">Rakshak Guidance</div>
+              <div className="dashboard-voice-guidance-text">{chatResponse.response}</div>
+              {Array.isArray(chatResponse.instructions) && chatResponse.instructions.length > 0 && (
+                <ul className="dashboard-voice-guidance-list">
+                  {chatResponse.instructions.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+              <div className="dashboard-chat-actions">
+                <button
+                  className="dashboard-link"
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${displayLocation} hospital`)}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                >
+                  Nearest hospitals
+                </button>
+                <button
+                  className="dashboard-link"
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${displayLocation} police station`)}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                >
+                  Nearest police
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1035,7 +1158,7 @@ export default function Chat() {
         <button className="nav-icon active" onClick={() => navigate("/chat")}>
           <IconChat className="icon" />
         </button>
-        <button className="nav-icon nav-sos" onClick={() => handleScrollTo(centerRef)}>SOS</button>
+        <button className="nav-icon nav-sos" onClick={handleSosTrigger}>SOS</button>
         <button className="nav-icon" onClick={() => navigate("/profile")}>
           <IconUser className="icon" />
         </button>
