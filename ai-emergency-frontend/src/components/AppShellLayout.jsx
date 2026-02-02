@@ -6,7 +6,7 @@ import { useAuth } from "../App";
 
 const NAV = [
   { to: "/", label: "Home" },
-  { to: "/chat", label: "Chat" },
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/profile", label: "Profile" },
 ];
 
@@ -14,7 +14,7 @@ export default function AppShellLayout({ children, theme, onToggleTheme }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, token, signOut } = useAuth();
-  const isDashboard = location.pathname === "/chat";
+  const isDashboard = location.pathname === "/dashboard";
 
   return (
     <div className={`app-shell${isDashboard ? " app-shell--dashboard" : ""}`}>

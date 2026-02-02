@@ -92,13 +92,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
-            path="/chat"
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Chat />
               </ProtectedRoute>
             }
           />
+          <Route path="/chat" element={<Navigate to="/dashboard" replace />} />
           <Route
             path="/profile"
             element={

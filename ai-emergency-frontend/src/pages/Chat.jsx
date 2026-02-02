@@ -1155,7 +1155,7 @@ export default function Chat() {
         <button className="nav-icon" onClick={() => navigate("/")}>
           <IconHome className="icon" />
         </button>
-        <button className="nav-icon active" onClick={() => navigate("/chat")}>
+        <button className="nav-icon active" onClick={() => navigate("/dashboard")}>
           <IconChat className="icon" />
         </button>
         <button className="nav-icon nav-sos" onClick={handleSosTrigger}>SOS</button>

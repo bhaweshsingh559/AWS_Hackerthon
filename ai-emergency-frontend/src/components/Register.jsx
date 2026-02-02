@@ -36,7 +36,7 @@ export default function Register({ onRegistered }) {
         localStorage.setItem("user", JSON.stringify(user));
       } catch {}
     }
-    navigate("/chat", { replace: true });
+    navigate("/dashboard", { replace: true });
   }
 
   async function handleRegister(e) {

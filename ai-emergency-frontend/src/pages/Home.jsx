@@ -14,7 +14,7 @@ export default function Home() {
         </p>
 
         <div className="home-actions">
-          <button className="home-btn primary" onClick={() => navigate("/chat")}>
+          <button className="home-btn primary" onClick={() => navigate("/dashboard")}>
             Open Dashboard
           </button>
           <button className="home-btn" onClick={() => navigate("/profile")}>
