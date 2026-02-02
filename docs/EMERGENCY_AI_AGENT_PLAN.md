@@ -74,7 +74,7 @@ Rakshak is a multi-platform emergency assistant designed to detect distress, gui
 
 ---
 
-## 3. Voice Assistant (Hands-Free Safety) — **In Progress**
+## 3. Voice Assistant (Hands-Free Safety) — **Completed (Web)**
 
 **Wake & Listening — _Completed (Web)_**
 - Wake phrase (configurable):
