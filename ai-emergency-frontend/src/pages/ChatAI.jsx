@@ -21,9 +21,11 @@ export default function ChatAI() {
     setSending(true);
     try {
       const resp = await postEmergencyChat({ text });
-      const responseText = Array.isArray(resp?.result?.instructions)
-        ? resp.result.instructions.join(" ")
-        : resp?.result?.response || resp?.raw || "No response available.";
+      const responseText = resp?.response
+        || resp?.result?.response
+        || (Array.isArray(resp?.result?.instructions) ? resp.result.instructions.join(" ") : null)
+        || resp?.raw
+        || "No response available.";
       setMessages((prev) => [...prev, { role: "assistant", content: responseText }]);
     } catch (err) {
       setMessages((prev) => [

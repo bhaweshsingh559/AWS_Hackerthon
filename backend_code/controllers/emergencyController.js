@@ -71,13 +71,13 @@ export async function assistantChat(req, res, next) {
 
     const prompt = buildChatPrompt(text);
     const result = await callBedrock(prompt);
-    const parsed = result.parsed || result.fallback || {
-      severity: "UNKNOWN",
-      instructions: [String(result.raw || "Unable to parse model output.")],
-      triggerAlert: false,
-      alertMessage: "",
-      reasoning: String(result.raw || "No model output")
-    };
+    const parsed = result.parsed || result.fallback || {};
+    const responseText = parsed.response
+      || parsed.answer
+      || parsed.message
+      || (Array.isArray(parsed.instructions) ? parsed.instructions.join(" ") : null)
+      || (result.raw ? String(result.raw) : null)
+      || "I'm sorry, I couldn't generate a response.";
 
     const incidentId = uuidv4();
     try { await logIncident({ incidentId, text, parsed, location, userId }); } catch (e) { logger.warn(e); }
@@ -89,7 +89,14 @@ export async function assistantChat(req, res, next) {
       } catch (e) { logger.error("publishAlertIfNeeded failed", e); }
     }
 
-    return res.json({ success: true, incidentId, result: parsed, raw: result.raw || null, usedModel: result.usedModel || null });
+    return res.json({
+      success: true,
+      incidentId,
+      response: responseText,
+      result: parsed,
+      raw: result.raw || null,
+      usedModel: result.usedModel || null,
+    });
   } catch (err) {
     logger.error("assistantChat error", err);
     next(err);
@@ -205,5 +212,9 @@ function buildAnalyzePrompt(text, vitals) {
 }
 
 function buildChatPrompt(text) {
-  return `...CHAT PROMPT... User asked: """${text}"""`;
+  return [
+    "You are Rakshak AI, a helpful assistant. Respond conversationally and clearly.",
+    "If the user describes an emergency, give concise immediate guidance and encourage contacting local emergency services.",
+    `User asked: """${text}"""`,
+  ].join("\n");
 }
