@@ -143,6 +143,7 @@ export default function Chat() {
   const [liveTracking, setLiveTracking] = useState(false);
   const [liveTrackingUntil, setLiveTrackingUntil] = useState(null);
   const [lastTrackingUpdate, setLastTrackingUpdate] = useState(null);
+  const [activeSafetyProgram, setActiveSafetyProgram] = useState("health");
   const [isListening, setIsListening] = useState(false);
   const [wakePhraseEnabled, setWakePhraseEnabled] = useState(true);
   const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
@@ -680,19 +681,106 @@ export default function Chat() {
     };
   }, []);
 
-  const safetyFeatures = [
-    "Fire Safety",
-    "Tsunami Safety",
-    "Health Emergency",
-    "Accidental Safety",
-    "Girls Safety",
-    "Old Age Safety",
-    "Bomb Threat Safety",
-    "Area Crime Alerts",
-    "Travel Safety Alerts",
-    "Flood Warning",
-    "Earthquake Safety",
-    "Cyclone Alerts",
+  const safetyPrograms = [
+    {
+      id: "health",
+      label: "Health Emergency",
+      summary: "Guide for cardiac, breathing, or medical emergencies with fast escalation.",
+      steps: [
+        "Call emergency services immediately.",
+        "Keep the person still and monitor breathing.",
+        "Share live location with emergency contacts.",
+      ],
+      actions: ["sos", "share-location", "hospitals"],
+    },
+    {
+      id: "fire",
+      label: "Fire Safety",
+      summary: "Evacuate quickly and alert nearby responders.",
+      steps: [
+        "Move away from smoke and flames.",
+        "Do not use elevators.",
+        "Call the fire emergency number.",
+      ],
+      actions: ["sos", "police", "share-location"],
+    },
+    {
+      id: "accident",
+      label: "Accidental Safety",
+      summary: "Immediate response for road and workplace accidents.",
+      steps: [
+        "Move to a safe area if possible.",
+        "Call emergency services or nearby hospital.",
+        "Share location with contacts.",
+      ],
+      actions: ["sos", "hospitals", "share-location"],
+    },
+    {
+      id: "girls",
+      label: "Girls Safety",
+      summary: "Quick actions and location sharing for harassment or stalking.",
+      steps: [
+        "Move to a crowded or well-lit place.",
+        "Alert emergency contacts with your location.",
+        "Call the nearest police station.",
+      ],
+      actions: ["sos", "police", "share-location"],
+    },
+    {
+      id: "old-age",
+      label: "Old Age Safety",
+      summary: "Support for seniors with health checks and quick alerts.",
+      steps: [
+        "Check responsiveness and breathing.",
+        "Call emergency services if needed.",
+        "Share live location with caregivers.",
+      ],
+      actions: ["sos", "share-location", "hospitals"],
+    },
+    {
+      id: "crime",
+      label: "Area Crime Alerts",
+      summary: "Stay alert in high-risk areas and keep contacts informed.",
+      steps: [
+        "Avoid isolated routes.",
+        "Share live location while travelling.",
+        "Contact local police if threatened.",
+      ],
+      actions: ["police", "share-location"],
+    },
+    {
+      id: "travel",
+      label: "Travel Safety Alerts",
+      summary: "Keep trusted contacts updated during travel.",
+      steps: [
+        "Enable live location sharing.",
+        "Confirm arrival checkpoints.",
+        "Report suspicious activity quickly.",
+      ],
+      actions: ["share-location", "police"],
+    },
+    {
+      id: "disaster",
+      label: "Earthquake & Flood",
+      summary: "Disaster guidance for earthquakes, floods, and cyclones.",
+      steps: [
+        "Move to a safe open area or higher ground.",
+        "Avoid damaged infrastructure.",
+        "Share location with contacts.",
+      ],
+      actions: ["share-location", "sos"],
+    },
+    {
+      id: "bomb",
+      label: "Bomb Threat Safety",
+      summary: "Evacuate calmly and alert authorities.",
+      steps: [
+        "Stay calm and move away from the area.",
+        "Do not touch suspicious objects.",
+        "Call police or emergency services.",
+      ],
+      actions: ["police", "sos"],
+    },
   ];
 
   const defaultHospitals = [
@@ -782,6 +870,7 @@ export default function Chat() {
   const liveTrackingMinutes = liveTrackingUntil
     ? Math.max(Math.ceil((liveTrackingUntil - Date.now()) / 60000), 0)
     : 0;
+  const selectedSafetyProgram = safetyPrograms.find((program) => program.id === activeSafetyProgram) || safetyPrograms[0];
 
   const handleHospitalView = (hospital) => {
     const query = encodeURIComponent(`${hospital.name} ${displayLocation}`);
@@ -1051,9 +1140,14 @@ export default function Chat() {
         <div className="dashboard-panel dashboard-left" ref={activityRef}>
           <div className="dashboard-panel-title">Safety Programs</div>
           <div className="dashboard-safety-list">
-            {safetyFeatures.map((feature) => (
-              <button key={feature} type="button" className="dashboard-safety-item">
-                {feature}
+            {safetyPrograms.map((program) => (
+              <button
+                key={program.id}
+                type="button"
+                className={`dashboard-safety-item ${activeSafetyProgram === program.id ? "is-active" : ""}`}
+                onClick={() => setActiveSafetyProgram(program.id)}
+              >
+                {program.label}
               </button>
             ))}
           </div>
@@ -1166,6 +1260,65 @@ export default function Chat() {
             <div className="dashboard-context-row">
               <span>Category</span>
               <strong>{hero.category}</strong>
+            </div>
+          </div>
+
+          <div className="dashboard-context-card dashboard-safety-detail">
+            <div className="dashboard-safety-header">
+              <div>
+                <div className="dashboard-safety-title">{selectedSafetyProgram.label}</div>
+                <div className="dashboard-safety-summary">{selectedSafetyProgram.summary}</div>
+              </div>
+              <button className="dashboard-link" type="button" onClick={handleSosTrigger}>Start SOS</button>
+            </div>
+            <div className="dashboard-safety-steps">
+              {selectedSafetyProgram.steps.map((step) => (
+                <div key={step} className="dashboard-safety-step">
+                  <span className="dashboard-safety-dot" />
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+            <div className="dashboard-safety-actions">
+              {selectedSafetyProgram.actions.includes("share-location") && (
+                <button
+                  className="dashboard-link dashboard-link--active"
+                  type="button"
+                  onClick={startLiveTracking}
+                >
+                  Share live location
+                </button>
+              )}
+              {selectedSafetyProgram.actions.includes("hospitals") && (
+                <button
+                  className="dashboard-link"
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps/search/?api=1&query=${locationQuery}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                >
+                  Nearest hospitals
+                </button>
+              )}
+              {selectedSafetyProgram.actions.includes("police") && (
+                <button
+                  className="dashboard-link"
+                  type="button"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps/search/?api=1&query=${policeQuery}`,
+                      "_blank",
+                      "noopener,noreferrer"
+                    )
+                  }
+                >
+                  Nearest police
+                </button>
+              )}
             </div>
           </div>
 

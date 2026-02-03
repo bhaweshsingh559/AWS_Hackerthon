@@ -675,6 +675,56 @@ body, #root { height: 100%; margin: 0; font-family: Inter, ui-sans-serif, system
   border-color: rgba(76,125,255,0.6);
   color: #4c7dff;
 }
+.dashboard-safety-item.is-active {
+  border-color: rgba(46,231,242,0.8);
+  box-shadow: 0 0 18px rgba(46,231,242,0.25);
+  transform: translateY(-1px);
+}
+.dashboard-safety-detail {
+  margin-top: 16px;
+  padding: 16px;
+}
+.dashboard-safety-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.dashboard-safety-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #eaf0ff;
+}
+.dashboard-safety-summary {
+  margin-top: 6px;
+  color: rgba(168,179,207,0.9);
+  font-size: 13px;
+}
+.dashboard-safety-steps {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+.dashboard-safety-step {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: rgba(234,240,255,0.85);
+  font-size: 13px;
+}
+.dashboard-safety-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2ee7f2;
+  box-shadow: 0 0 6px rgba(46,231,242,0.6);
+}
+.dashboard-safety-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 .dashboard-callout {
   margin-top: 12px;
   padding: 12px;
