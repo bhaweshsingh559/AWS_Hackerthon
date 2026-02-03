@@ -122,7 +122,7 @@ Identify nearest:
 
 Show **Directions** buttons (map search links) in the web UI. For medical emergencies, the top-rated nearby hospital can be included in the alert payload. No automatic calling without user action.
 
-**Step 3 — Continuous Tracking (Optional) — _In Progress_**
+**Step 3 — Continuous Tracking (Optional) — _Completed (Web)_**
 
 - Share live location for a limited time window
 - User-controlled stop option

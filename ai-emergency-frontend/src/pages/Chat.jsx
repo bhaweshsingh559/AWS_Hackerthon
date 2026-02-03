@@ -140,6 +140,9 @@ export default function Chat() {
   const [chatMessage, setChatMessage] = useState("");
   const [chatPending, setChatPending] = useState(false);
   const [chatResponse, setChatResponse] = useState(null);
+  const [liveTracking, setLiveTracking] = useState(false);
+  const [liveTrackingUntil, setLiveTrackingUntil] = useState(null);
+  const [lastTrackingUpdate, setLastTrackingUpdate] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [wakePhraseEnabled, setWakePhraseEnabled] = useState(true);
   const [wakePhraseActiveUntil, setWakePhraseActiveUntil] = useState(null);
@@ -745,6 +748,9 @@ export default function Chat() {
   const mapUrl = currentLocation
     ? `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lon}&z=14&output=embed`
     : null;
+  const liveTrackingMinutes = liveTrackingUntil
+    ? Math.max(Math.ceil((liveTrackingUntil - Date.now()) / 60000), 0)
+    : 0;
 
   const handleHospitalView = (hospital) => {
     const query = encodeURIComponent(`${hospital.name} ${displayLocation}`);
@@ -837,6 +843,44 @@ export default function Chat() {
     setEmergencyLoading(false);
     setEmergencyTranscript("");
   };
+
+  const startLiveTracking = async () => {
+    const until = Date.now() + 15 * 60 * 1000;
+    setLiveTrackingUntil(until);
+    setLiveTracking(true);
+    const coords = await requestLocation();
+    if (coords) {
+      setLastTrackingUpdate(new Date());
+    }
+  };
+
+  const stopLiveTracking = () => {
+    setLiveTracking(false);
+    setLiveTrackingUntil(null);
+  };
+
+  useEffect(() => {
+    if (!liveTracking) return undefined;
+    let cancelled = false;
+    const updateLocation = async () => {
+      const coords = await requestLocation();
+      if (!cancelled && coords) {
+        setLastTrackingUpdate(new Date());
+      }
+    };
+    updateLocation();
+    const interval = setInterval(updateLocation, 60000);
+    const remaining = liveTrackingUntil ? Math.max(liveTrackingUntil - Date.now(), 0) : 0;
+    const timeout = setTimeout(() => {
+      setLiveTracking(false);
+      setLiveTrackingUntil(null);
+    }, remaining || 0);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [liveTracking, liveTrackingUntil]);
 
   const handleSosTrigger = () => {
     if (pendingEmergency) return;
@@ -1230,6 +1274,25 @@ export default function Chat() {
                 </div>
               </button>
             )}
+          </div>
+
+          <div className="dashboard-tracking-card">
+            <div className="dashboard-tracking-header">
+              <span>Live Location Sharing</span>
+              {liveTracking && <span className="dashboard-tracking-pill">Active</span>}
+            </div>
+            <div className="dashboard-tracking-meta">
+              {liveTracking
+                ? `Sharing for the next ${liveTrackingMinutes} min • Last update ${lastTrackingUpdate ? lastTrackingUpdate.toLocaleTimeString() : "just now"}`
+                : "Share your live location for 15 minutes."}
+            </div>
+            <div className="dashboard-tracking-actions">
+              {liveTracking ? (
+                <button className="dashboard-link" type="button" onClick={stopLiveTracking}>Stop sharing</button>
+              ) : (
+                <button className="dashboard-link dashboard-link--active" type="button" onClick={startLiveTracking}>Start sharing</button>
+              )}
+            </div>
           </div>
 
           <div className="dashboard-panel-title dashboard-title-inline">
