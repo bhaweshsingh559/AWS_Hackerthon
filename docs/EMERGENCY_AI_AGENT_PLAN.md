@@ -129,26 +129,26 @@ Show **Directions** buttons (map search links) in the web UI. For medical emerge
 
 ---
 
-## 5. Location Intelligence — **In Progress**
+## 5. Location Intelligence — **Completed (Web)**
 
 **Location Sources — _Completed (Web)_**
 - GPS (primary)
 - Network location fallback
 - Last known location (offline)
 
-**Capabilities — _In Progress_**
+**Capabilities — _Completed (Web)_**
 - Reverse geocoding — _Completed (Web)_
 - Distance-based ranking — _Completed (Web)_
 - Google Maps deep links — _Completed (Web)_
 
-**Data Stored (Minimal) — _In Progress_**
+**Data Stored (Minimal) — _Completed (Server)_**
 - Latitude / Longitude
 - Timestamp
 - Incident category
 
 ---
 
-## 6. Hospital & Police Discovery — **In Progress**
+## 6. Hospital & Police Discovery — **Completed (Web)**
 
 **Data Sources — _Completed (Web)_**
 - Google Places API (primary)
