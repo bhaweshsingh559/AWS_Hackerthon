@@ -374,6 +374,37 @@ export default function Chat() {
     }
   };
 
+  const getContactNumbers = () => {
+    const contacts = getStoredContacts();
+    return contacts
+      .map((contact) => {
+        if (!contact) return "";
+        if (typeof contact === "string") return contact;
+        if (typeof contact === "object") {
+          return contact.phone || contact.number || contact.mobile || "";
+        }
+        return "";
+      })
+      .map((value) => String(value))
+      .map((value) => value.replace(/[^\d+]/g, ""))
+      .map((value) => value.replace(/^\+/, ""))
+      .filter(Boolean);
+  };
+
+  const sendLiveLocationWhatsApp = (coords) => {
+    const numbers = getContactNumbers();
+    if (!numbers.length) return;
+    const locationLink = coords
+      ? `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lon}`
+      : "Location unavailable";
+    const name = user?.name || "User";
+    const message = `Live location sharing for ${name}. Location: ${locationLink}`;
+    numbers.forEach((number) => {
+      const url = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    });
+  };
+
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -851,6 +882,7 @@ export default function Chat() {
     const coords = await requestLocation();
     if (coords) {
       setLastTrackingUpdate(new Date());
+      sendLiveLocationWhatsApp(coords);
     }
   };
 
@@ -1288,7 +1320,12 @@ export default function Chat() {
             </div>
             <div className="dashboard-tracking-actions">
               {liveTracking ? (
-                <button className="dashboard-link" type="button" onClick={stopLiveTracking}>Stop sharing</button>
+                <>
+                  <button className="dashboard-link" type="button" onClick={() => sendLiveLocationWhatsApp(currentLocation)}>
+                    Send WhatsApp now
+                  </button>
+                  <button className="dashboard-link" type="button" onClick={stopLiveTracking}>Stop sharing</button>
+                </>
               ) : (
                 <button className="dashboard-link dashboard-link--active" type="button" onClick={startLiveTracking}>Start sharing</button>
               )}
