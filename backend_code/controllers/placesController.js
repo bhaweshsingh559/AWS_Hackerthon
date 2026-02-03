@@ -25,6 +25,26 @@ async function fetchPlaceDetails(placeId) {
   return json.result || null;
 }
 
+function normalizePlaceDetails(detail) {
+  return {
+    name: detail.name,
+    rating: detail.rating ?? null,
+    phone: detail.international_phone_number || detail.formatted_phone_number || "N/A",
+    address: detail.formatted_address || "",
+    lat: detail.geometry?.location?.lat ?? null,
+    lon: detail.geometry?.location?.lng ?? null,
+    status: "available",
+  };
+}
+
+async function getNearbyPlacesByType({ lat, lon, radius, placeType }) {
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=${placeType}&key=${GOOGLE_PLACES_KEY}`;
+  const json = await fetchJson(url);
+  const results = (json.results || []).slice(0, 8);
+  const details = await Promise.all(results.map((item) => fetchPlaceDetails(item.place_id)));
+  return details.filter(Boolean).map(normalizePlaceDetails);
+}
+
 export async function getNearbyHospitals(req, res, next) {
   try {
     if (!GOOGLE_PLACES_KEY) {
@@ -36,22 +56,29 @@ export async function getNearbyHospitals(req, res, next) {
       return res.status(400).json({ success: false, error: "lat and lon are required" });
     }
     const radius = Number(req.query.radius || 30000);
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=hospital&key=${GOOGLE_PLACES_KEY}`;
-    const json = await fetchJson(url);
-    const results = (json.results || []).slice(0, 8);
-    const details = await Promise.all(results.map((item) => fetchPlaceDetails(item.place_id)));
-    const hospitals = details.filter(Boolean).map((detail) => ({
-      name: detail.name,
-      rating: detail.rating ?? null,
-      phone: detail.international_phone_number || detail.formatted_phone_number || "N/A",
-      address: detail.formatted_address || "",
-      lat: detail.geometry?.location?.lat ?? null,
-      lon: detail.geometry?.location?.lng ?? null,
-      status: "available",
-    }));
+    const hospitals = await getNearbyPlacesByType({ lat, lon, radius, placeType: "hospital" });
     return res.json({ success: true, hospitals });
   } catch (err) {
     logger.error("getNearbyHospitals failed", err);
+    next(err);
+  }
+}
+
+export async function getNearbyPoliceStations(req, res, next) {
+  try {
+    if (!GOOGLE_PLACES_KEY) {
+      return res.status(400).json({ success: false, error: "GOOGLE_PLACES_API_KEY not configured" });
+    }
+    const lat = Number(req.query.lat);
+    const lon = Number(req.query.lon);
+    if (Number.isNaN(lat) || Number.isNaN(lon)) {
+      return res.status(400).json({ success: false, error: "lat and lon are required" });
+    }
+    const radius = Number(req.query.radius || 30000);
+    const policeStations = await getNearbyPlacesByType({ lat, lon, radius, placeType: "police" });
+    return res.json({ success: true, policeStations });
+  } catch (err) {
+    logger.error("getNearbyPoliceStations failed", err);
     next(err);
   }
 }

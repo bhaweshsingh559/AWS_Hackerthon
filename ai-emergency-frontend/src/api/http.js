@@ -120,4 +120,14 @@ export async function getNearbyHospitals(lat, lon, radius = 30000) {
   return resp || { hospitals: [] };
 }
 
+export async function getNearbyPoliceStations(lat, lon, radius = 30000) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    radius: String(radius),
+  });
+  const resp = await safeFetch(`/api/places/police?${params.toString()}`, { method: "GET", allowNotFound: true });
+  return resp || { policeStations: [] };
+}
+
 export { API_BASE };

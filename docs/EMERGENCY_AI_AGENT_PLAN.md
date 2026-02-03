@@ -161,7 +161,7 @@ Show **Directions** buttons (map search links) in the web UI. For medical emerge
   - Emergency availability
   - Reputation (ratings)
 
-**Police Discovery — _In Progress_**
+**Police Discovery — _Completed (Web)_**
 - Police station discovery and ranking
 
 **Important Note**

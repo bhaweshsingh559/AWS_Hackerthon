@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDashboardOverview, getNearbyHospitals, postAlert, postEmergencyResponse } from "../api/http";
+import { getDashboardOverview, getNearbyHospitals, getNearbyPoliceStations, postAlert, postEmergencyResponse } from "../api/http";
 
 export default function Chat() {
   const IconBell = (props) => (
@@ -132,6 +132,7 @@ export default function Chat() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("");
   const [dynamicHospitals, setDynamicHospitals] = useState([]);
+  const [dynamicPoliceStations, setDynamicPoliceStations] = useState([]);
   const [pendingCall, setPendingCall] = useState(null);
   const [pendingEmergency, setPendingEmergency] = useState(null);
   const [emergencyResponse, setEmergencyResponse] = useState(null);
@@ -262,6 +263,58 @@ export default function Chat() {
       });
     } catch (err) {
       console.warn("hospital lookup failed", err);
+      return [];
+    }
+  };
+
+  const fetchNearbyPoliceStations = async (coords) => {
+    if (!coords) return [];
+    const radius = 30000;
+    try {
+      const resp = await getNearbyPoliceStations(coords.lat, coords.lon, radius);
+      if (resp?.policeStations?.length) {
+        return resp.policeStations.map((station) => ({
+          ...station,
+          distanceKm: null,
+          rating: station.rating ?? null,
+        }));
+      }
+    } catch (err) {
+      console.warn("google police lookup failed, falling back", err);
+    }
+
+    const query = `
+      [out:json];
+      (
+        node["amenity"="police"](around:${radius},${coords.lat},${coords.lon});
+        way["amenity"="police"](around:${radius},${coords.lat},${coords.lon});
+        relation["amenity"="police"](around:${radius},${coords.lat},${coords.lon});
+      );
+      out center tags;
+    `;
+    try {
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      const data = await res.json();
+      return (data.elements || []).map((item) => {
+        const lat = item.lat ?? item.center?.lat;
+        const lon = item.lon ?? item.center?.lon;
+        return {
+          name: item.tags?.name || "Nearby Police Station",
+          distanceKm: null,
+          rating: item.tags?.rating || item.tags?.stars || null,
+          phone: item.tags?.phone || item.tags?.["contact:phone"] || "N/A",
+          address: item.tags?.["addr:full"] || item.tags?.["addr:street"] || "",
+          lat,
+          lon,
+          status: "available",
+        };
+      });
+    } catch (err) {
+      console.warn("police lookup failed", err);
       return [];
     }
   };
@@ -570,6 +623,29 @@ export default function Chat() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    const loadPoliceStations = async () => {
+      const coords = await requestLocation();
+      if (!mounted || !coords) return;
+      const nearby = await fetchNearbyPoliceStations(coords);
+      if (!mounted) return;
+      const withDistance = nearby
+        .map((station) => ({
+          ...station,
+          distanceKm: station.distanceKm ?? calculateDistanceKm(coords, station),
+        }))
+        .filter((station) => station.distanceKm == null || station.distanceKm <= 30);
+      setDynamicPoliceStations(withDistance);
+    };
+    loadPoliceStations();
+    const interval = setInterval(loadPoliceStations, 60000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const safetyFeatures = [
     "Fire Safety",
     "Tsunami Safety",
@@ -590,6 +666,11 @@ export default function Chat() {
     { name: "Apollo Clinic", distanceKm: 18.2, rating: 4.7, status: "available" },
     { name: "Rakshak Care", distanceKm: 24.5, rating: 4.6, status: "available" },
     { name: "Medilife Specialty", distanceKm: 27.1, rating: 4.5, status: "available" },
+  ];
+  const defaultPoliceStations = [
+    { name: "Central Police Station", distanceKm: 9.2, rating: 4.4, status: "available" },
+    { name: "North Zone Police", distanceKm: 14.7, rating: 4.2, status: "available" },
+    { name: "East Division Police", distanceKm: 22.3, rating: 4.1, status: "available" },
   ];
 
   const hospitals = useMemo(() => {
@@ -616,6 +697,30 @@ export default function Chat() {
       });
   }, [dynamicHospitals, overview]);
 
+  const policeStations = useMemo(() => {
+    const source = dynamicPoliceStations.length > 0
+      ? dynamicPoliceStations
+      : (overview?.policeStations || defaultPoliceStations);
+    const normalized = source.map((station) => ({
+      ...station,
+      rating: station.rating ?? null,
+      distanceKm: station.distanceKm ?? 18.0,
+      phone: station.phone || "N/A",
+      address: station.address || "",
+      status: station.status || "available",
+    }));
+    return normalized
+      .filter((station) => station.distanceKm <= 30)
+      .sort((a, b) => {
+        const aHasPhone = a.phone && a.phone !== "N/A";
+        const bHasPhone = b.phone && b.phone !== "N/A";
+        if (aHasPhone !== bHasPhone) return aHasPhone ? -1 : 1;
+        const aRating = Number(a.rating) || 0;
+        const bRating = Number(b.rating) || 0;
+        return bRating - aRating || a.distanceKm - b.distanceKm;
+      });
+  }, [dynamicPoliceStations, overview]);
+
   const hero = overview?.hero || {
     status: "Listening...",
     detectedBy: "Voice",
@@ -636,12 +741,18 @@ export default function Chat() {
     ? (locationAddress || `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`)
     : hero.location;
   const locationQuery = encodeURIComponent(`${displayLocation} hospitals`);
+  const policeQuery = encodeURIComponent(`${displayLocation} police station`);
   const mapUrl = currentLocation
     ? `https://www.google.com/maps?q=${currentLocation.lat},${currentLocation.lon}&z=14&output=embed`
     : null;
 
   const handleHospitalView = (hospital) => {
     const query = encodeURIComponent(`${hospital.name} ${displayLocation}`);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handlePoliceView = (station) => {
+    const query = encodeURIComponent(`${station.name} ${displayLocation}`);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
   };
 
@@ -1004,13 +1115,13 @@ export default function Chat() {
               return (
                 <div key={`${hospital.name}-${hospital.lat ?? "x"}-${hospital.lon ?? "y"}-${hospital.address ?? ""}`} className="dashboard-hospital-card">
                   <div>
-                  <button
-                    className="dashboard-hospital-name dashboard-hospital-link"
-                    type="button"
-                    onClick={() => handleHospitalView(hospital)}
-                  >
-                    {hospital.name}
-                  </button>
+                    <button
+                      className="dashboard-hospital-name dashboard-hospital-link"
+                      type="button"
+                      onClick={() => handleHospitalView(hospital)}
+                    >
+                      {hospital.name}
+                    </button>
                     <div className="dashboard-hospital-meta">
                       {hospital.distanceKm} km • ⭐ {ratingLabel} • {hospital.status}
                     </div>
@@ -1021,6 +1132,47 @@ export default function Chat() {
                   <button className="dashboard-call" onClick={() => handleCallHospital(hospital)}>
                     <IconPhone className="icon" />
                   </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="dashboard-panel-title dashboard-title-inline">
+            Nearest Police Stations
+            <button
+              className="dashboard-link"
+              onClick={() =>
+                window.open(
+                  `https://www.google.com/maps/search/?api=1&query=${policeQuery}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+            >
+              View all
+            </button>
+          </div>
+          <div className="dashboard-hospital-list dashboard-hospital-scroll">
+            {policeStations.map((station) => {
+              const ratingValue = Number(station.rating);
+              const ratingLabel = Number.isFinite(ratingValue) && ratingValue > 0 ? ratingValue.toFixed(1) : "Not rated";
+              return (
+                <div key={`${station.name}-${station.lat ?? "x"}-${station.lon ?? "y"}-${station.address ?? ""}`} className="dashboard-hospital-card">
+                  <div>
+                    <button
+                      className="dashboard-hospital-name dashboard-hospital-link"
+                      type="button"
+                      onClick={() => handlePoliceView(station)}
+                    >
+                      {station.name}
+                    </button>
+                    <div className="dashboard-hospital-meta">
+                      {station.distanceKm} km • ⭐ {ratingLabel} • {station.status}
+                    </div>
+                    <div className="dashboard-hospital-meta">
+                      {station.phone} {station.address ? `• ${station.address}` : ""}
+                    </div>
+                  </div>
                 </div>
               );
             })}
