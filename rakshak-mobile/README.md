@@ -50,6 +50,11 @@ This opens the Expo dev server in your browser.
 - **Location permission denied**: enable location access for Expo Go in your phone settings.
 - **Metro bundler stuck**: stop and restart `npm run start`.
 - **Network QR not loading**: make sure device + computer are on same Wi‑Fi.
+- **EMFILE: too many open files (macOS)**: increase the open files limit and retry.
+  - Check: `ulimit -n`
+  - Temporary fix (current shell): `ulimit -n 65536`
+  - Then restart: `npm run start`
+- **Node.js v22 issues**: use Node.js **LTS** (recommended) for Expo stability.
 
 ## Scripts
 ```bash
