@@ -512,7 +512,8 @@ export default function Chat() {
         "panic",
         "faint",
       ];
-      if (!pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
+      const wakeActive = wakePhraseEnabled && wakePhraseActiveUntil && Date.now() <= wakePhraseActiveUntil;
+      if (wakeActive && !pendingEmergency && emergencyKeywords.some((keyword) => combined.includes(keyword))) {
         const phrase = finalTranscript.trim() || interim.trim() || combined.trim();
         transcriptRef.current = phrase;
         setEmergencyTranscript(phrase);
@@ -536,7 +537,7 @@ export default function Chat() {
           })
           .finally(() => setEmergencyLoading(false));
         recognition.stop();
-      } else {
+      } else if (!wakeActive) {
         setEmergencyTranscript("");
       }
     };
@@ -568,6 +569,7 @@ export default function Chat() {
 
   useEffect(() => {
     if (!speechSupported || !recognitionRef.current) return;
+    if (!wakePhraseEnabled) return;
     const requestMic = async () => {
       await ensureMicAccess();
       try {
@@ -577,7 +579,7 @@ export default function Chat() {
       }
     };
     requestMic();
-  }, [speechSupported]);
+  }, [speechSupported, wakePhraseEnabled]);
 
   useEffect(() => {
     if (!speechSupported || !recognitionRef.current) return;
@@ -1137,21 +1139,68 @@ export default function Chat() {
       </div>
 
       <div className="dashboard-main">
-        <div className="dashboard-panel dashboard-left" ref={activityRef}>
-          <div className="dashboard-panel-title">Safety Programs</div>
-          <div className="dashboard-safety-list">
-            {safetyPrograms.map((program) => (
-              <button
-                key={program.id}
-                type="button"
-                className={`dashboard-safety-item ${activeSafetyProgram === program.id ? "is-active" : ""}`}
-                onClick={() => setActiveSafetyProgram(program.id)}
-              >
-                {program.label}
-              </button>
-            ))}
+          <div className="dashboard-panel dashboard-left" ref={activityRef}>
+            <div className="dashboard-panel-title">Live Location</div>
+            <div className="dashboard-map-card">
+              {mapUrl ? (
+                <iframe
+                  title="Dashboard location map"
+                  src={mapUrl}
+                  width="100%"
+                  height="220"
+                  style={{ border: 0, borderRadius: 14 }}
+                  loading="lazy"
+                />
+              ) : (
+                <button className="dashboard-map-placeholder" type="button" onClick={requestLocation}>
+                  <div className="dashboard-map-pin" />
+                  <div className="dashboard-map-pin dashboard-map-pin--alt" />
+                  <div className="dashboard-map-hint">
+                    {locationStatus === "locating" && "Detecting location…"}
+                    {locationStatus === "blocked" && "Location blocked. Tap the pin icon to allow."}
+                    {locationStatus === "unsupported" && "Location not supported."}
+                    {locationStatus === "idle" && "Tap the pin icon to show your location."}
+                  </div>
+                </button>
+              )}
+            </div>
+            <div className="dashboard-tracking-card">
+              <div className="dashboard-tracking-header">
+                <span>Live Location Sharing</span>
+                {liveTracking && <span className="dashboard-tracking-pill">Active</span>}
+              </div>
+              <div className="dashboard-tracking-meta">
+                {liveTracking
+                  ? `Sharing for the next ${liveTrackingMinutes} min • Last update ${lastTrackingUpdate ? lastTrackingUpdate.toLocaleTimeString() : "just now"}`
+                  : "Share your live location for 15 minutes."}
+              </div>
+              <div className="dashboard-tracking-actions">
+                {liveTracking ? (
+                  <>
+                    <button className="dashboard-link" type="button" onClick={() => sendLiveLocationWhatsApp(currentLocation)}>
+                      Send WhatsApp now
+                    </button>
+                    <button className="dashboard-link" type="button" onClick={stopLiveTracking}>Stop sharing</button>
+                  </>
+                ) : (
+                  <button className="dashboard-link dashboard-link--active" type="button" onClick={startLiveTracking}>Start sharing</button>
+                )}
+              </div>
+            </div>
+            <div className="dashboard-panel-title">Safety Programs</div>
+            <div className="dashboard-safety-list">
+              {safetyPrograms.map((program) => (
+                <button
+                  key={program.id}
+                  type="button"
+                  className={`dashboard-safety-item ${activeSafetyProgram === program.id ? "is-active" : ""}`}
+                  onClick={() => setActiveSafetyProgram(program.id)}
+                >
+                  {program.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
         <div className="dashboard-center" ref={centerRef}>
           <div
@@ -1436,54 +1485,6 @@ export default function Chat() {
             </div>
           )}
 
-
-          <div className="dashboard-map-card">
-            {mapUrl ? (
-              <iframe
-                title="Dashboard location map"
-                src={mapUrl}
-                width="100%"
-                height="220"
-                style={{ border: 0, borderRadius: 14 }}
-                loading="lazy"
-              />
-            ) : (
-              <button className="dashboard-map-placeholder" type="button" onClick={requestLocation}>
-                <div className="dashboard-map-pin" />
-                <div className="dashboard-map-pin dashboard-map-pin--alt" />
-                <div className="dashboard-map-hint">
-                  {locationStatus === "locating" && "Detecting location…"}
-                  {locationStatus === "blocked" && "Location blocked. Tap the pin icon to allow."}
-                  {locationStatus === "unsupported" && "Location not supported."}
-                  {locationStatus === "idle" && "Tap the pin icon to show your location."}
-                </div>
-              </button>
-            )}
-          </div>
-
-          <div className="dashboard-tracking-card">
-            <div className="dashboard-tracking-header">
-              <span>Live Location Sharing</span>
-              {liveTracking && <span className="dashboard-tracking-pill">Active</span>}
-            </div>
-            <div className="dashboard-tracking-meta">
-              {liveTracking
-                ? `Sharing for the next ${liveTrackingMinutes} min • Last update ${lastTrackingUpdate ? lastTrackingUpdate.toLocaleTimeString() : "just now"}`
-                : "Share your live location for 15 minutes."}
-            </div>
-            <div className="dashboard-tracking-actions">
-              {liveTracking ? (
-                <>
-                  <button className="dashboard-link" type="button" onClick={() => sendLiveLocationWhatsApp(currentLocation)}>
-                    Send WhatsApp now
-                  </button>
-                  <button className="dashboard-link" type="button" onClick={stopLiveTracking}>Stop sharing</button>
-                </>
-              ) : (
-                <button className="dashboard-link dashboard-link--active" type="button" onClick={startLiveTracking}>Start sharing</button>
-              )}
-            </div>
-          </div>
 
           <div className="dashboard-panel-title dashboard-title-inline">
             Emergency Chat
