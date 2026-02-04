@@ -54,7 +54,18 @@ This opens the Expo dev server in your browser.
   - Check: `ulimit -n`
   - Temporary fix (current shell): `ulimit -n 65536`
   - Then restart: `npm run start`
+- **EMFILE persists even after ulimit**:
+  - Install **Watchman** (recommended by Metro): `brew install watchman`
+  - Restart the dev server after installing Watchman.
+  - Close extra apps/editors that might open many file watchers.
 - **Node.js v22 issues**: use Node.js **LTS** (recommended) for Expo stability.
+
+## If you still see `expo-location` version warnings
+Run the Expo-managed install so versions match Expo 50:
+
+```bash
+npx expo install expo-location
+```
 
 ## Scripts
 ```bash
