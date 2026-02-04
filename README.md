@@ -12,13 +12,14 @@ along with a chat-based assistant and live location tracking.
 2. [Features](#-features)
 3. [Tech Stack](#-tech-stack)
 4. [Project Structure](#-project-structure)
-5. [Environment Variables](#-environment-variables)
-6. [Local Development Setup](#-local-development-setup)
-7. [Production Deployment (Docker)](#-production-deployment-docker)
-8. [Testing Alerts (Postman Example)](#-testing-alerts-postman-example)
-9. [Common Issues & Fixes](#-common-issues--fixes)
-10. [Helpful Commands](#-helpful-commands)
-11. [License](#-license)
+5. [Emergency AI Agent Roadmap](#-emergency-ai-agent-roadmap)
+6. [Environment Variables](#-environment-variables)
+7. [Local Development Setup](#-local-development-setup)
+8. [Production Deployment (Docker)](#-production-deployment-docker)
+9. [Testing Alerts (Postman Example)](#-testing-alerts-postman-example)
+10. [Common Issues & Fixes](#-common-issues--fixes)
+11. [Helpful Commands](#-helpful-commands)
+12. [License](#-license)
 
 ---
 
@@ -47,6 +48,12 @@ This project contains both:
 ✅ Fully containerized with Docker for production  
 
 ---
+
+## Emergency AI Agent Roadmap
+
+For the next phase of the project (voice-triggered emergency detection, mobile app support, and incident-aware routing), see the detailed plan here:
+
+- [Emergency AI Agent Plan (Web + Mobile + Voice)](docs/EMERGENCY_AI_AGENT_PLAN.md)
 
 ## Tech Stack
 

@@ -6,6 +6,7 @@ import { useAuth } from "../App";
 
 const NAV = [
   { to: "/", label: "Home" },
+  { to: "/dashboard", label: "Dashboard" },
   { to: "/chat", label: "Chat" },
   { to: "/profile", label: "Profile" },
 ];
@@ -14,113 +15,120 @@ export default function AppShellLayout({ children, theme, onToggleTheme }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, token, signOut } = useAuth();
+  const isDashboard = location.pathname === "/dashboard";
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isDashboard ? " app-shell--dashboard" : ""}`}>
       {/* ==== LEFT SIDEBAR ==== */}
-      <aside className="app-shell__sidebar" aria-hidden={false}>
-        <div className="brand">
-          <div className="brand__logo">🛡️</div>
-          <div className="brand__title">Rakshak AI</div>
-        </div>
-
-        <nav className="nav">
-          {NAV.map((n) => (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={
-                "nav__link" +
-                (location.pathname === n.to ? " nav__link--active" : "")
-              }
-            >
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="sidebar__footer">
-          <ThemeToggle current={theme} onToggle={onToggleTheme} />
-
-          {token && user ? (
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                signOut();
-                navigate("/login");
-              }}
-            >
-              Logout
-            </button>
-          ) : (
-            <Link to="/login" className="btn btn--ghost">
-              Login
-            </Link>
-          )}
-        </div>
-      </aside>
-
-      {/* ==== MAIN AREA ==== */}
-      <div className="app-shell__main">
-        <header className="topbar">
-          <div className="topbar__left">
-            <div className="topbar__title">Rakshak — Emergency Assistant</div>
-            <div className="topbar__subtitle">
-              Speak or type. SOS &amp; alerts with location.
-            </div>
+      {!isDashboard && (
+        <aside className="app-shell__sidebar" aria-hidden={false}>
+          <div className="brand">
+            <div className="brand__logo">🛡️</div>
+            <div className="brand__title">Rakshak AI</div>
           </div>
 
-          {/* ==== HEADER RIGHT SECTION ==== */}
-          <div className="topbar__right" style={styles.topbarRight}>
+          <nav className="nav">
+            {NAV.map((n) => (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={
+                  "nav__link" +
+                  (location.pathname === n.to ? " nav__link--active" : "")
+                }
+              >
+                {n.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="sidebar__footer">
             <ThemeToggle current={theme} onToggle={onToggleTheme} />
 
             {token && user ? (
-              <>
-                <Link
-                  to="/profile"
-                  className="btn btn--ghost"
-                  style={styles.profileBtn}
-                >
-                  👤 {user.name || user.email?.split("@")[0] || "Profile"}
-                </Link>
-                <button
-                  onClick={() => {
-                    signOut();
-                    navigate("/login");
-                  }}
-                  className="btn btn--danger"
-                  style={styles.logoutBtn}
-                >
-                  Logout
-                </button>
-              </>
+              <button
+                className="btn btn--ghost"
+                onClick={() => {
+                  signOut();
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </button>
             ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="btn btn--primary"
-                  style={styles.loginBtn}
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="btn btn--ghost"
-                  style={styles.registerBtn}
-                >
-                  Register
-                </Link>
-              </>
+              <Link to="/login" className="btn btn--ghost">
+                Login
+              </Link>
             )}
           </div>
-        </header>
+        </aside>
+      )}
 
-        <main className="content">{children}</main>
+      {/* ==== MAIN AREA ==== */}
+      <div className="app-shell__main">
+        {!isDashboard && (
+          <header className="topbar">
+            <div className="topbar__left">
+              <div className="topbar__title">Rakshak — Emergency Assistant</div>
+              <div className="topbar__subtitle">
+                Speak or type. SOS &amp; alerts with location.
+              </div>
+            </div>
 
-        <footer className="footer">
-          <div>© {new Date().getFullYear()} Rakshak AI</div>
-          <div className="footer__right">Developed for Hackathon</div>
-        </footer>
+            {/* ==== HEADER RIGHT SECTION ==== */}
+            <div className="topbar__right" style={styles.topbarRight}>
+              <ThemeToggle current={theme} onToggle={onToggleTheme} />
+
+              {token && user ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="btn btn--ghost"
+                    style={styles.profileBtn}
+                  >
+                    👤 {user.name || user.email?.split("@")[0] || "Profile"}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      navigate("/login");
+                    }}
+                    className="btn btn--danger"
+                    style={styles.logoutBtn}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="btn btn--primary"
+                    style={styles.loginBtn}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="btn btn--ghost"
+                    style={styles.registerBtn}
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
+            </div>
+          </header>
+        )}
+
+        <main className={`content${isDashboard ? " content--dashboard" : ""}`}>{children}</main>
+
+        {!isDashboard && (
+          <footer className="footer">
+            <div>© {new Date().getFullYear()} Rakshak AI</div>
+            <div className="footer__right">Developed for Hackathon</div>
+          </footer>
+        )}
       </div>
     </div>
   );

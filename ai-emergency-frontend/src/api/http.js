@@ -30,6 +30,9 @@ export async function safeFetch(pathOrUrl, opts = {}) {
   }
 
   if (!res.ok) {
+    if (opts.allowNotFound && res.status === 404) {
+      return null;
+    }
     const err = new Error(json?.error || json || text || res.statusText || `HTTP ${res.status}`);
     err.status = res.status;
     err.body = json || text;
@@ -72,6 +75,18 @@ export async function postAnalyze(payload) {
   return await safeFetch("/api/emergency/analyze", { method: "POST", body: payload });
 }
 
+export async function postEmergencyChat(payload) {
+  return await safeFetch("/api/emergency/chat", { method: "POST", body: payload });
+}
+
+export async function postClassifyIncident(payload) {
+  return await safeFetch("/api/emergency/classify", { method: "POST", body: payload });
+}
+
+export async function postEmergencyResponse(payload) {
+  return await safeFetch("/api/emergency/respond", { method: "POST", body: payload });
+}
+
 export async function postAlert(payload) {
   return await safeFetch("/api/emergency/alert", { method: "POST", body: payload });
 }
@@ -83,6 +98,36 @@ export async function postUserContacts(contactsArr = []) {
 
 export async function postUpdateProfile(updates = {}) {
   return await safeFetch("/api/user/profile", { method: "POST", body: updates });
+}
+
+export async function getDashboardOverview() {
+  const resp = await safeFetch("/api/dashboard/overview", { method: "GET", allowNotFound: true });
+  return resp || { overview: null };
+}
+
+export async function getDashboardActivity() {
+  const resp = await safeFetch("/api/dashboard/activity", { method: "GET", allowNotFound: true });
+  return resp || { activities: [] };
+}
+
+export async function getNearbyHospitals(lat, lon, radius = 30000) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    radius: String(radius),
+  });
+  const resp = await safeFetch(`/api/places/nearby?${params.toString()}`, { method: "GET", allowNotFound: true });
+  return resp || { hospitals: [] };
+}
+
+export async function getNearbyPoliceStations(lat, lon, radius = 30000) {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    radius: String(radius),
+  });
+  const resp = await safeFetch(`/api/places/police?${params.toString()}`, { method: "GET", allowNotFound: true });
+  return resp || { policeStations: [] };
 }
 
 export { API_BASE };

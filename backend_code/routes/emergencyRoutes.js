@@ -1,6 +1,6 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
-import { analyzeSymptoms, assistantChat } from "../controllers/emergencyController.js";
+import { analyzeSymptoms, assistantChat, classifyIncident, detectEmergencyText } from "../controllers/emergencyController.js";
 import { publishCustomAlert } from "../services/alertService.js";
 import requireAuth from "../middlewares/requireAuth.js";
 
@@ -10,7 +10,10 @@ router.post("/analyze", requireAuth, analyzeSymptoms);
 
 router.post("/chat", requireAuth, assistantChat);
 
-router.post("/alert", requireAuth, async (req, res, next) => {
+router.post("/detect", requireAuth, detectEmergencyText);
+router.post("/classify", requireAuth, classifyIncident);
+
+router.post("/alert", async (req, res, next) => {
   try {
     const { message, location, contacts } = req.body || {};
 

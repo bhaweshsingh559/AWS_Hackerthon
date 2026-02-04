@@ -9,6 +9,10 @@ export default function Register({ onRegistered }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("");
+  const [medicalInfo, setMedicalInfo] = useState("");
+  const [address, setAddress] = useState("");
   const [emergencyContacts, setEmergencyContacts] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,7 +36,7 @@ export default function Register({ onRegistered }) {
         localStorage.setItem("user", JSON.stringify(user));
       } catch {}
     }
-    navigate("/chat", { replace: true });
+    navigate("/dashboard", { replace: true });
   }
 
   async function handleRegister(e) {
@@ -41,6 +45,10 @@ export default function Register({ onRegistered }) {
 
     if (!email.trim() || !password) {
       setError("Email and password required.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
@@ -61,6 +69,9 @@ export default function Register({ onRegistered }) {
         email: email.trim().toLowerCase(),
         phone: phone.trim() || null,
         password,
+        bloodGroup: bloodGroup || null,
+        medicalInfo: medicalInfo.trim() || null,
+        address: address.trim() || null,
         emergencyContacts: contactsArray,
       };
       const resp = await postRegister(body);
@@ -78,138 +89,94 @@ export default function Register({ onRegistered }) {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.headerRow}>
-          <h2 style={styles.title}>Create account</h2>
-          <div style={styles.smallTag}>Emergency contacts required</div>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h2 className="auth-title">Create account</h2>
+          <div className="auth-tag">Emergency contacts required</div>
         </div>
 
-        <p style={styles.subtitle}>Register and add at least one emergency contact (comma separated). This will be used by SOS.</p>
+        <p className="auth-subtitle">Register and add at least one emergency contact (comma separated). This will be used by SOS.</p>
 
         <form onSubmit={handleRegister} style={{ width: "100%" }}>
-          <label style={styles.label}>Full name</label>
-          <input style={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name (optional)" />
+          <div className="auth-grid">
+            <div className="auth-field">
+              <label className="auth-label">Full name</label>
+              <input className="auth-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name (optional)" />
+            </div>
 
-          <label style={styles.label}>Email</label>
-          <input type="email" style={styles.input} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            <div className="auth-field">
+              <label className="auth-label">Phone (you)</label>
+              <input className="auth-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91xxxxxxxxxx (optional)" />
+            </div>
 
-          <label style={styles.label}>Phone (you)</label>
-          <input style={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91xxxxxxxxxx (optional)" />
+            <div className="auth-field">
+              <label className="auth-label">Email</label>
+              <input type="email" className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            </div>
 
-          <label style={styles.label}>Password</label>
-          <input type="password" style={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose a secure password" required />
+            <div className="auth-field">
+              <label className="auth-label">Blood group</label>
+              <select className="auth-input" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)}>
+                <option value="">Select blood group (optional)</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
 
-          <label style={styles.label}>Emergency contacts (comma separated) <span style={{ fontSize: 12, color: "#64748b" }}>(required)</span></label>
-          <input style={styles.input} value={emergencyContacts} onChange={(e) => setEmergencyContacts(e.target.value)} placeholder="+91..., +91..." />
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <input type="password" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Choose a secure password" required />
+            </div>
 
-          {error && <div style={styles.error}>{error}</div>}
+            <div className="auth-field">
+              <label className="auth-label">Confirm password</label>
+              <input type="password" className="auth-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required />
+            </div>
 
-          <div style={styles.actionsRow}>
-            <button type="submit" style={{ ...styles.primary, opacity: loading ? 0.85 : 1 }} disabled={loading}>
+            <div className="auth-field auth-full">
+              <label className="auth-label">Medical info (allergies, conditions)</label>
+              <textarea
+                className="auth-input"
+                style={{ minHeight: 88 }}
+                value={medicalInfo}
+                onChange={(e) => setMedicalInfo(e.target.value)}
+                placeholder="e.g., asthma, peanut allergy, diabetes"
+              />
+            </div>
+
+            <div className="auth-field auth-full">
+              <label className="auth-label">Home address</label>
+              <input
+                className="auth-input"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Street, City (optional)"
+              />
+            </div>
+
+            <div className="auth-field auth-full">
+              <label className="auth-label">Emergency contacts (comma separated) <span style={{ fontSize: 12 }}>(required)</span></label>
+              <input className="auth-input" value={emergencyContacts} onChange={(e) => setEmergencyContacts(e.target.value)} placeholder="+91..., +91..." />
+            </div>
+          </div>
+
+          {error && <div className="auth-error">{error}</div>}
+
+          <div className="auth-actions">
+            <button type="submit" className="auth-primary" disabled={loading}>
               {loading ? "Creating..." : "Register"}
             </button>
-
-            <Link to="/login" style={styles.ghostLink}>Already registered? Login</Link>
+            <Link to="/login" className="auth-link">Already registered? Login</Link>
           </div>
         </form>
       </div>
     </div>
   );
 }
-
-/* Styles (consistent with Login) */
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#f8fafc",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 640,
-    padding: 28,
-    borderRadius: 12,
-    background: "#fff",
-    boxShadow: "0 12px 30px rgba(2,6,23,0.08)",
-    border: "1px solid rgba(2,6,23,0.03)",
-  },
-  headerRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  title: {
-    margin: 0,
-    color: "#0f172a",
-    fontSize: 24,
-    fontWeight: 800,
-  },
-  smallTag: {
-    background: "#ecfdf5",
-    color: "#065f46",
-    padding: "6px 10px",
-    borderRadius: 8,
-    fontSize: 12,
-    fontWeight: 700,
-  },
-  subtitle: {
-    marginTop: 8,
-    marginBottom: 16,
-    color: "#475569",
-    fontSize: 14,
-  },
-  label: {
-    display: "block",
-    fontSize: 13,
-    color: "#475569",
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  input: {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: 10,
-    border: "1px solid #e6eef2",
-    fontSize: 15,
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  actionsRow: {
-    display: "flex",
-    gap: 12,
-    marginTop: 16,
-    alignItems: "center",
-  },
-  primary: {
-    background: "#007f5f",
-    color: "#fff",
-    border: "none",
-    padding: "10px 18px",
-    borderRadius: 10,
-    cursor: "pointer",
-    fontWeight: 700,
-    minWidth: 140,
-  },
-  ghostLink: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "10px 14px",
-    borderRadius: 10,
-    textDecoration: "none",
-    color: "#007f5f",
-    border: "1px solid #e6eef0",
-    background: "transparent",
-  },
-  error: {
-    marginTop: 10,
-    color: "#b91c1c",
-    fontSize: 14,
-    fontWeight: 600,
-  },
-};

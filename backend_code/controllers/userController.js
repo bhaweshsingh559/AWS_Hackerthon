@@ -30,6 +30,9 @@ export async function getProfile(req, res, next) {
       email: user.Email || user.email,
       name: user.Name || user.name,
       phone: user.Phone || user.phone,
+      medicalInfo: user.MedicalInfo || user.medicalInfo || "",
+      bloodGroup: user.BloodGroup || user.bloodGroup || "",
+      address: user.Address || user.address || "",
       emergencyContacts: user.EmergencyContacts ? JSON.parse(user.EmergencyContacts) : [],
       location: user.Location ? JSON.parse(user.Location) : null,
     };
@@ -50,6 +53,9 @@ export async function updateProfile(req, res, next) {
       email: result.Email || result.email,
       name: result.Name || result.name,
       phone: result.Phone || result.phone,
+      medicalInfo: result.MedicalInfo || result.medicalInfo || "",
+      bloodGroup: result.BloodGroup || result.bloodGroup || "",
+      address: result.Address || result.address || "",
       emergencyContacts: result.EmergencyContacts ? JSON.parse(result.EmergencyContacts) : []
     } });
   } catch (err) {
