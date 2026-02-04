@@ -8,10 +8,53 @@ This is a starter React Native (Expo) app that mirrors the web dashboard structu
 - Safety program list + detail steps
 - Wake-phrase toggle for voice assistant
 
-## Run locally
+## Beginner setup (step-by-step)
+
+### 1) Install required tools
+You only need **Node.js** and **Expo Go** to run on your phone.
+
+- **Node.js (LTS)**: https://nodejs.org
+- **Expo Go** (mobile app):
+  - Android: https://play.google.com/store/apps/details?id=host.exp.exponent
+  - iOS: https://apps.apple.com/app/expo-go/id982107779
+
+> Optional (only if you want a simulator):
+> - **Android Studio** (Android emulator)
+> - **Xcode** (iOS simulator, macOS only)
+
+### 2) Install dependencies
+From the repo root:
+
 ```bash
+cd rakshak-mobile
 npm install
+```
+
+### 3) Start the app
+```bash
 npm run start
 ```
 
-> Use Expo Go or an emulator to preview the app.
+This opens the Expo dev server in your browser.
+
+### 4) Run on your phone (easiest)
+- Ensure your phone and computer are on the **same Wi‑Fi**.
+- Open **Expo Go** on your phone.
+- Scan the QR code shown in the Expo dev server.
+
+### 5) Run on emulator (optional)
+- **Android**: open Android Studio → start an emulator → press **a** in the Expo terminal.
+- **iOS** (macOS): open Xcode → start a simulator → press **i** in the Expo terminal.
+
+## Common issues
+- **Location permission denied**: enable location access for Expo Go in your phone settings.
+- **Metro bundler stuck**: stop and restart `npm run start`.
+- **Network QR not loading**: make sure device + computer are on same Wi‑Fi.
+
+## Scripts
+```bash
+npm run start   # start Expo dev server
+npm run android # open Android emulator
+npm run ios     # open iOS simulator
+npm run web     # run in web browser
+```
